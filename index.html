@@ -42,18 +42,20 @@
             <div id="error-container" class="error-container" style="display: none;"></div>
 
             <section id="dashboard" class="content-section active">
-                <!-- Dashboard content will be injected by JS -->
+                <div id="dashboard-container" class="dashboard-container">
+                    <!-- Dashboard accordions will be injected by JS -->
+                </div>
             </section>
 
             <section id="calculators" class="content-section">
                 <h2><i class="ph-calculator"></i> Csillagászati Kalkulátorok</h2>
                 
                 <div class="accordion">
-                    <button class="accordion-header">
+                    <button class="accordion-header active">
                         <h3><i class="ph-gear-six"></i> Felszerelés Alapbeállításai</h3>
                         <i class="ph ph-caret-down accordion-icon"></i>
                     </button>
-                    <div class="accordion-content">
+                    <div class="accordion-content active" style="max-height: fit-content; padding: 1.5rem;">
                         <p class="description">Add meg itt a felszerelésed adatait. Ezek az értékek automatikusan kitöltik a megfelelő mezőket, de a számításoknál felülírhatod őket.</p>
                         <form id="main-gear-form" class="form-grid">
                              <div><label>Távcső fókusztávolsága (mm): <input type="number" name="teleFocalLength" value="1000"></label></div>

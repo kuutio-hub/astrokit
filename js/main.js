@@ -6,29 +6,26 @@ import { initCalculators } from './modules/calculators.js';
 import { initAstrofotoHelper } from './modules/astrofoto.js';
 import { initAnalemma } from './modules/analemma.js';
 import { initCalendar } from './modules/calendar.js';
-import { initWiki } from './modules/wiki.js';
 
-const APP_VERSION = 'v1.2.0';
+const APP_VERSION = 'v1.3.0';
 
 document.addEventListener('DOMContentLoaded', async () => {
     displayVersion();
     setupNavigation();
     setupNightMode();
+    setupAccordions();
     initCalculators();
     initAstrofotoHelper();
     initCalendar();
-    initWiki();
 
     try {
         const coords = await getUserLocation();
         await loadDashboardData(coords.latitude, coords.longitude);
         
-        // Auto-start analemma generation
         document.querySelector('.nav-item[data-target="analemma"]').addEventListener('click', () => {
            initAnalemma(coords.latitude, coords.longitude);
         }, { once: true });
 
-        // If analemma is the landing page, start it
         if(window.location.hash === '#analemma') {
             initAnalemma(coords.latitude, coords.longitude);
         }
@@ -65,7 +62,6 @@ function setupNavigation() {
         });
     });
     
-    // Check hash on load
     const currentHash = window.location.hash.substring(1);
     if (currentHash) {
         const targetNavItem = document.querySelector(`.nav-item[data-target="${currentHash}"]`);
@@ -73,7 +69,6 @@ function setupNavigation() {
             targetNavItem.click();
         }
     } else {
-        // Default to dashboard if no hash
          document.querySelector('.nav-item[data-target="dashboard"]').click();
     }
 }
@@ -94,11 +89,31 @@ function setupNightMode() {
         applyNightMode(isNight);
     });
 
-    // Load saved preference
     const savedMode = localStorage.getItem('nightMode') === 'true';
     applyNightMode(savedMode);
 }
 
+function setupAccordions() {
+    document.addEventListener('click', (e) => {
+        const header = e.target.closest('.accordion-header');
+        if (!header) return;
+
+        const accordion = header.parentElement;
+        const content = header.nextElementSibling;
+        const isActive = header.classList.contains('active');
+
+        header.classList.toggle('active', !isActive);
+        content.classList.toggle('active', !isActive);
+
+        if (!isActive) {
+            content.style.maxHeight = content.scrollHeight + 'px';
+            content.style.padding = '1.5rem';
+        } else {
+            content.style.maxHeight = null;
+            content.style.padding = '0 1.5rem';
+        }
+    });
+}
 
 async function loadDashboardData(lat, lon) {
     const now = new Date();
