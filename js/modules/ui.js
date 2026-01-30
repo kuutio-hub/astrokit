@@ -146,11 +146,27 @@ function updateMoonVisual(phase) {
     const visual = document.getElementById('moon-visual');
     if (!visual) return;
 
-    // phase: 0=new, 0.25=1st Q, 0.5=full, 0.75=3rd Q. Synodic month is ~29.53 days.
-    // We have 28 images, so we map the phase (0 to 1) to an index (0 to 27).
-    // Rounding to the nearest index provides a better visual match than flooring.
-    const phaseIndex = Math.round(phase * 28) % 28;
-    visual.innerHTML = moonPhaseSVGs[phaseIndex] || moonPhaseSVGs[0];
+    // Total steps in a full cycle (0-27)
+    const totalSteps = 28; 
+    // Calculate the index in our 0-27 steps
+    const stepIndex = Math.round(phase * totalSteps) % totalSteps;
+    
+    let svg;
+    let transform = '';
+
+    // The first half of the cycle (0-14, waxing) uses the images directly
+    if (stepIndex <= 14) {
+        svg = moonPhaseSVGs[stepIndex];
+    } else {
+        // The second half (15-27, waning) mirrors the first half's images
+        // e.g., phase 15 mirrors 13, 16 mirrors 12, ..., 27 mirrors 1
+        const mirrorIndex = totalSteps - stepIndex;
+        svg = moonPhaseSVGs[mirrorIndex];
+        // We apply a horizontal flip
+        transform = 'transform: scaleX(-1);';
+    }
+
+    visual.innerHTML = `<div style="${transform}">${svg || moonPhaseSVGs[0]}</div>`;
 }
 
 function updateMoonPosition(lat, lon) {

@@ -147,10 +147,9 @@ function drawAnalemma(canvas, sunPositions) {
         
         ctx.fillStyle = styles.getPropertyValue('--bg-color').trim();
         ctx.fillRect(0, 0, width, height);
-        ctx.strokeStyle = styles.getPropertyValue('--border-color').trim();
+        ctx.textAlign = 'center';
         ctx.fillStyle = styles.getPropertyValue('--text-color').trim();
         ctx.font = "12px sans-serif";
-        ctx.textAlign = 'center';
         ctx.fillText("Dél", padding + plotWidth/2, height - padding + 25);
         ctx.save();
         ctx.translate(padding - 35, height/2);
@@ -158,12 +157,20 @@ function drawAnalemma(canvas, sunPositions) {
         ctx.fillText("Magasság", 0, 0);
         ctx.restore();
 
-        sunPositions.forEach(pos => {
-            const { x, y } = getCanvasCoords(pos);
-            ctx.fillStyle = styles.getPropertyValue('--text-secondary-color').trim();
-            ctx.fillRect(x, y, 1.5, 1.5);
-        });
+        // Draw the analemma path as a continuous line
+        ctx.beginPath();
+        const firstPoint = getCanvasCoords(sunPositions[0]);
+        ctx.moveTo(firstPoint.x, firstPoint.y);
+        for(let i = 1; i < sunPositions.length; i++) {
+            const point = getCanvasCoords(sunPositions[i]);
+            ctx.lineTo(point.x, point.y);
+        }
+        ctx.strokeStyle = styles.getPropertyValue('--text-secondary-color').trim();
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
 
+
+        // Draw special points on top
         specialPoints.forEach(p => {
             const { x, y } = getCanvasCoords(p.pos);
             ctx.beginPath();
@@ -174,6 +181,7 @@ function drawAnalemma(canvas, sunPositions) {
             ctx.stroke();
         });
 
+        // Draw today's position
         if(todayPos) {
             const { x, y } = getCanvasCoords(todayPos);
             ctx.beginPath();

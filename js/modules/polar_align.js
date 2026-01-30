@@ -26,24 +26,40 @@ function drawPolarScope(canvas, lst) {
 
     const styles = getComputedStyle(document.body);
     const bgColor = styles.getPropertyValue('--bg-color').trim();
-    const textColor = styles.getPropertyValue('--text-color').trim();
-    const lineColor = styles.getPropertyValue('--border-color').trim();
+    const textColor = styles.getPropertyValue('--text-secondary-color').trim();
+    const lineLightColor = styles.getPropertyValue('--border-color').trim();
     const accentColor = styles.getPropertyValue('--accent-color').trim();
+    const textColorStrong = styles.getPropertyValue('--text-color').trim();
 
-    // Polaris J2000 Right Ascension in hours
     const polarisRA = 2.5303; 
-    // Polaris is about 0.65 degrees from the NCP
-    const polarisDistFraction = 0.15; // Visual representation distance
+    const polarisDistFraction = 0.8; // Zoom in for better visibility
 
-    // Clear canvas
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, width, height);
 
-    // Draw outer circle
-    ctx.strokeStyle = lineColor;
-    ctx.beginPath();
-    ctx.arc(center.x, center.y, radius, 0, 2 * Math.PI);
-    ctx.stroke();
+    // Draw hour markers and ticks
+    ctx.strokeStyle = lineLightColor;
+    for (let i = 0; i < 24; i++) {
+        const angle = toRad(i * 15 - 90);
+        const isMajorHour = i % 6 === 0;
+        const tickStart = radius * (isMajorHour ? 0.95 : 0.98);
+        const tickEnd = radius;
+        
+        ctx.beginPath();
+        ctx.moveTo(center.x + Math.cos(angle) * tickStart, center.y + Math.sin(angle) * tickStart);
+        ctx.lineTo(center.x + Math.cos(angle) * tickEnd, center.y + Math.sin(angle) * tickEnd);
+        ctx.stroke();
+
+        if (isMajorHour) {
+            ctx.fillStyle = textColorStrong;
+            ctx.font = '16px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const textX = center.x + Math.cos(angle) * (radius - 20);
+            const textY = center.y + Math.sin(angle) * (radius - 20);
+            ctx.fillText(i, textX, textY);
+        }
+    }
 
     // Draw crosshairs for NCP
     ctx.beginPath();
@@ -51,41 +67,55 @@ function drawPolarScope(canvas, lst) {
     ctx.lineTo(center.x + 10, center.y);
     ctx.moveTo(center.x, center.y - 10);
     ctx.lineTo(center.x, center.y + 10);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = textColor;
     ctx.stroke();
 
-    // Draw hour markers
-    ctx.fillStyle = textColor;
-    ctx.font = '14px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('0', center.x, center.y + radius - 15);
-    ctx.fillText('6', center.x - radius + 15, center.y);
-    ctx.fillText('12', center.x, center.y - radius + 15);
-    ctx.fillText('18', center.x + radius - 15, center.y);
 
-    // Calculate Polaris position
-    const hourAngle = (lst - polarisRA) * 15; // in degrees
-    const angleRad = toRad(hourAngle) - Math.PI / 2; // Adjust for canvas coordinates (0 is top)
+    const hourAngle = (lst - polarisRA) * 15;
+    const angleRad = toRad(hourAngle) - Math.PI / 2;
     
     const polarisPos = {
         x: center.x + Math.cos(angleRad) * radius * polarisDistFraction,
         y: center.y + Math.sin(angleRad) * radius * polarisDistFraction
     };
 
-    // Draw Polaris path circle
+    // Draw Polaris path circle with hour ticks
+    ctx.strokeStyle = lineLightColor;
     ctx.setLineDash([2, 4]);
     ctx.beginPath();
     ctx.arc(center.x, center.y, radius * polarisDistFraction, 0, 2 * Math.PI);
     ctx.stroke();
+    
+    for (let i = 0; i < 24; i++) {
+        const angle = toRad(i * 15 - 90);
+        const isMajor = i % 3 === 0;
+        const tickLength = isMajor ? 8 : 4;
+        const pathRadius = radius * polarisDistFraction;
+        ctx.beginPath();
+        ctx.moveTo(
+            center.x + Math.cos(angle) * pathRadius,
+            center.y + Math.sin(angle) * pathRadius
+        );
+        ctx.lineTo(
+            center.x + Math.cos(angle) * (pathRadius - tickLength),
+            center.y + Math.sin(angle) * (pathRadius - tickLength)
+        );
+        ctx.stroke();
+    }
+    
     ctx.setLineDash([]);
     
     // Draw Polaris
     ctx.fillStyle = accentColor;
     ctx.beginPath();
-    ctx.arc(polarisPos.x, polarisPos.y, 5, 0, 2 * Math.PI);
+    ctx.arc(polarisPos.x, polarisPos.y, 6, 0, 2 * Math.PI);
     ctx.fill();
+    ctx.strokeStyle = bgColor;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
 
-    // Update info text
+
     const infoEl = document.getElementById('polar-align-info');
     if (infoEl) {
         const lstHours = Math.floor(lst);

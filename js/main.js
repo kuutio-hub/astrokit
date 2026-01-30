@@ -9,7 +9,7 @@ import { initCalendar } from './modules/calendar.js';
 import { initWiki } from './modules/wiki.js';
 import { initPolarAlign, stopPolarAlignAnimation } from './modules/polar_align.js';
 
-const APP_VERSION = 'v0.8.0';
+const APP_VERSION = 'v0.9.0';
 
 document.addEventListener('DOMContentLoaded', async () => {
     displayVersion();
@@ -57,50 +57,54 @@ function displayVersion() {
 }
 
 function setupNavigation() {
-    const navItems = document.querySelectorAll('.nav-item');
+    const desktopNavItems = document.querySelectorAll('.desktop-nav .nav-item');
+    const mobileNavItems = document.querySelectorAll('.mobile-menu-overlay .mobile-nav-item');
     const contentSections = document.querySelectorAll('.content-section');
     const menuToggle = document.getElementById('menu-toggle');
-    const nav = document.getElementById('main-nav');
+    const mobileMenu = document.getElementById('mobile-menu');
 
     const activateTab = (targetId) => {
-        // Stop any running animations on other tabs
         stopPolarAlignAnimation();
 
-        navItems.forEach(i => i.classList.remove('active'));
         contentSections.forEach(s => s.classList.remove('active'));
+        const activeSection = document.getElementById(targetId);
+        if (activeSection) {
+            activeSection.classList.add('active');
+        }
 
-        const activeItem = document.querySelector(`.nav-item[data-target="${targetId}"]`);
-        if(activeItem) activeItem.classList.add('active');
+        desktopNavItems.forEach(i => i.classList.toggle('active', i.dataset.target === targetId));
         
-        document.getElementById(targetId)?.classList.add('active');
         window.location.hash = targetId;
 
-        // Close mobile menu on navigation
-        nav.classList.remove('active');
+        // Close mobile menu
+        mobileMenu.classList.remove('active');
         menuToggle.querySelector('i').className = 'ph ph-list';
     };
-    
-    navItems.forEach(item => {
+
+    desktopNavItems.forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
-            const targetId = item.getAttribute('data-target');
-            activateTab(targetId);
+            activateTab(item.dataset.target);
+        });
+    });
+
+    mobileNavItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            activateTab(item.dataset.target);
         });
     });
 
     menuToggle.addEventListener('click', () => {
-        nav.classList.toggle('active');
+        mobileMenu.classList.toggle('active');
         const icon = menuToggle.querySelector('i');
-        if (nav.classList.contains('active')) {
-            icon.className = 'ph ph-x';
-        } else {
-            icon.className = 'ph ph-list';
-        }
+        icon.className = mobileMenu.classList.contains('active') ? 'ph ph-x' : 'ph ph-list';
     });
-    
+
     const currentHash = window.location.hash.substring(1) || 'dashboard';
     activateTab(currentHash);
 }
+
 
 function setupNightMode() {
     const toggle = document.getElementById('night-mode-toggle');
@@ -133,29 +137,19 @@ function setupAccordions() {
         const content = header.nextElementSibling;
         const isActive = header.classList.contains('active');
         
-        // Don't close others in calculators
-        if(!header.closest('#calculators .sticky-container')) {
-            const allActiveHeaders = document.querySelectorAll('.accordion-header.active');
-            allActiveHeaders.forEach(h => {
-                if(h !== header) {
-                    h.classList.remove('active');
-                    const c = h.nextElementSibling;
-                    c.classList.remove('active');
-                    c.style.maxHeight = null;
-                    c.style.padding = '0 1.5rem';
-                }
-            });
-        }
-
         header.classList.toggle('active', !isActive);
         content.classList.toggle('active', !isActive);
 
         if (!isActive) {
             content.style.maxHeight = content.scrollHeight + 'px';
-            content.style.padding = '1.5rem';
+            if (header.closest('#calculators .sticky-container')) {
+                 content.style.padding = '1.5rem';
+            }
         } else {
             content.style.maxHeight = null;
-            content.style.padding = '0 1.5rem';
+            if (header.closest('#calculators .sticky-container')) {
+                 content.style.padding = '0 1.5rem';
+            }
         }
     });
 }
@@ -167,7 +161,6 @@ function setupInfoTooltips() {
     document.body.addEventListener('click', e => {
         const icon = e.target.closest('.info-icon');
         
-        // If clicking the same icon, hide it
         if (icon && icon === currentIcon) {
             tooltip.style.opacity = '0';
             tooltip.style.display = 'none';
@@ -175,7 +168,6 @@ function setupInfoTooltips() {
             return;
         }
 
-        // If clicking another icon, show its tooltip
         if (icon) {
             e.stopPropagation();
             const description = icon.dataset.description;
@@ -188,7 +180,7 @@ function setupInfoTooltips() {
                 tooltip.style.opacity = '1';
                 currentIcon = icon;
             }
-        } else { // If clicking anywhere else, hide the tooltip
+        } else { 
             tooltip.style.opacity = '0';
             tooltip.style.display = 'none';
             currentIcon = null;

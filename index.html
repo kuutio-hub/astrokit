@@ -15,8 +15,16 @@
         <header>
             <div class="title-container">
                 <h1 class="main-title"><i class="ph-shooting-star"></i> <span class="long-title">Amatőrcsillagász Svájci Bicska</span><span class="short-title">Amatőrcsillagász Bicska</span></h1>
-                <p class="desktop-only">Helyi adatok, kalkulátorok és segédletek egy helyen</p>
             </div>
+            <nav id="main-nav" class="desktop-nav">
+                <button class="nav-item active" data-target="dashboard" title="Műszerfal"><i class="ph-gauge"></i></button>
+                <button class="nav-item" data-target="calculators" title="Kalkulátorok"><i class="ph-calculator"></i></button>
+                <button class="nav-item" data-target="polar-align" title="Pólusra Állás"><i class="ph-navigation-arrow"></i></button>
+                <button class="nav-item" data-target="astrophoto" title="Asztrofotó"><i class="ph-camera"></i></button>
+                <button class="nav-item" data-target="analemma" title="Analemma"><i class="ph-sun-horizon"></i></button>
+                <button class="nav-item" data-target="calendar" title="Naptár"><i class="ph-calendar"></i></button>
+                <button class="nav-item" data-target="wiki" title="Tudástár"><i class="ph-books"></i></button>
+            </nav>
             <div class="controls">
                 <button id="night-mode-toggle" class="icon-button" aria-label="Éjszakai mód kapcsolója">
                     <i class="ph ph-moon"></i>
@@ -26,16 +34,17 @@
                 </button>
             </div>
         </header>
+        
+        <div id="mobile-menu" class="mobile-menu-overlay">
+            <a href="#dashboard" class="mobile-nav-item" data-target="dashboard"><i class="ph-gauge"></i> Műszerfal</a>
+            <a href="#calculators" class="mobile-nav-item" data-target="calculators"><i class="ph-calculator"></i> Kalkulátorok</a>
+            <a href="#polar-align" class="mobile-nav-item" data-target="polar-align"><i class="ph-navigation-arrow"></i> Pólusra Állás</a>
+            <a href="#astrophoto" class="mobile-nav-item" data-target="astrophoto"><i class="ph-camera"></i> Asztrofotó</a>
+            <a href="#analemma" class="mobile-nav-item" data-target="analemma"><i class="ph-sun-horizon"></i> Analemma</a>
+            <a href="#calendar" class="mobile-nav-item" data-target="calendar"><i class="ph-calendar"></i> Naptár</a>
+            <a href="#wiki" class="mobile-nav-item" data-target="wiki"><i class="ph-books"></i> Tudástár</a>
+        </div>
 
-        <nav id="main-nav">
-            <a href="#dashboard" class="nav-item active" data-target="dashboard"><i class="ph-gauge"></i> Műszerfal</a>
-            <a href="#calculators" class="nav-item" data-target="calculators"><i class="ph-calculator"></i> Kalkulátorok</a>
-            <a href="#polar-align" class="nav-item" data-target="polar-align"><i class="ph-navigation-arrow"></i> Pólusra Állás</a>
-            <a href="#astrophoto" class="nav-item" data-target="astrophoto"><i class="ph-camera"></i> Asztrofotó</a>
-            <a href="#analemma" class="nav-item" data-target="analemma"><i class="ph-sun-horizon"></i> Analemma</a>
-            <a href="#calendar" class="nav-item" data-target="calendar"><i class="ph-calendar"></i> Naptár</a>
-            <a href="#wiki" class="nav-item" data-target="wiki"><i class="ph-books"></i> Tudástár</a>
-        </nav>
 
         <main>
             <div id="loader" class="loader-container">
@@ -53,17 +62,15 @@
 
             <section id="calculators" class="content-section">
                 <div class="sticky-container">
-                    <h2><i class="ph-calculator"></i> Csillagászati Kalkulátorok</h2>
                     <div class="accordion">
                         <button class="accordion-header">
                             <h3><i class="ph-gear-six"></i> Felszerelés Alapbeállításai</h3>
                             <i class="ph ph-caret-down accordion-icon"></i>
                         </button>
                         <div class="accordion-content">
-                            <p class="description">Add meg itt a felszerelésed adatait. Ezek az értékek automatikusan frissülnek a többi modulban.</p>
                             <form id="main-gear-form" class="form-grid">
-                                 <div><label>Távcső fókusztávolsága (mm): <input type="number" name="teleFocalLength" value="1000"></label></div>
                                  <div><label>Távcső átmérője (mm): <input type="number" name="teleAperture" value="120"></label></div>
+                                 <div><label>Távcső fókusztávolsága (mm): <input type="number" name="teleFocalLength" value="1000"></label></div>
                                  <div><label>Okulár fókusztávolsága (mm): <input type="number" name="eyeFocalLength" value="10"></label></div>
                                  <div><label>Okulár látómezeje (°): <input type="number" name="eyeAFOV" value="52"></label></div>
                                  <div><label>Kamera: <select name="cameraSelect" id="cameraSelect"></select></label></div>
