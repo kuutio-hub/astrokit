@@ -29,57 +29,55 @@ function drawPolarScope(canvas, lst) {
     const styles = getComputedStyle(document.body);
     const bgColor = styles.getPropertyValue('--bg-color').trim();
     const textColor = styles.getPropertyValue('--text-secondary-color').trim();
-    const lineLightColor = styles.getPropertyValue('--border-color').trim();
+    const lineColor = styles.getPropertyValue('--text-color').trim();
     const accentColor = styles.getPropertyValue('--accent-color').trim();
-    const textColorStrong = styles.getPropertyValue('--text-color').trim();
 
     const polarisRA = 2.5303; 
-    const polarisDistFraction = 0.7; // Slightly smaller circle for Polaris
+    const polarisDistFraction = 0.7;
 
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, width, height);
-
-    // Draw outer ticks
-    ctx.strokeStyle = lineLightColor;
     
-    for (let i = 0; i < 144; i++) { 
-        const angle = toRad(i * 2.5 - 90);
+    // Draw 12-hour outer circle with ticks
+    for (let i = 0; i < 72; i++) { // 72 ticks for 5-minute intervals
+        const angle = toRad(i * 5 - 90);
         const isHour = i % 6 === 0;
-        const isHalfHour = i % 3 === 0;
-        
+        const isTenMin = i % 2 === 0;
+
         let tickStart;
+        ctx.strokeStyle = lineColor;
         if (isHour) {
             tickStart = radius * 0.90;
-            ctx.lineWidth = 2;
-        } else if (isHalfHour) {
+            ctx.lineWidth = 2.5;
+        } else if (isTenMin) {
             tickStart = radius * 0.94;
             ctx.lineWidth = 1.5;
-        } else {
+        } else { // 5-minute tick
             tickStart = radius * 0.97;
             ctx.lineWidth = 0.75;
         }
-
+        
         ctx.beginPath();
         ctx.moveTo(center.x + Math.cos(angle) * tickStart, center.y + Math.sin(angle) * tickStart);
         ctx.lineTo(center.x + Math.cos(angle) * radius, center.y + Math.sin(angle) * radius);
         ctx.stroke();
 
-        // Draw hour numbers
         if (isHour) {
-            ctx.fillStyle = textColorStrong;
-            ctx.font = 'bold 18px sans-serif';
+            ctx.fillStyle = textColor; // Fainter numbers
+            ctx.font = 'bold 16px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             const textX = center.x + Math.cos(angle) * (radius - 25);
             const textY = center.y + Math.sin(angle) * (radius - 25);
             ctx.save();
             ctx.translate(textX, textY);
-            ctx.rotate(angle + Math.PI / 2); // Rotate numbers to be upright
-            ctx.fillText(i/6, 0, 0);
+            ctx.rotate(angle + Math.PI / 2);
+            let hour = (i / 6) + 3; // Start with 3 at the top
+            if (hour > 12) hour -= 12;
+            ctx.fillText(hour, 0, 0);
             ctx.restore();
         }
     }
-
 
     // Draw crosshairs for NCP
     ctx.beginPath();
@@ -87,8 +85,8 @@ function drawPolarScope(canvas, lst) {
     ctx.lineTo(center.x + 15, center.y);
     ctx.moveTo(center.x, center.y - 15);
     ctx.lineTo(center.x, center.y + 15);
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = textColor;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = lineColor;
     ctx.stroke();
 
     const hourAngle = (lst - polarisRA) * 15;
@@ -100,7 +98,7 @@ function drawPolarScope(canvas, lst) {
     };
 
     // Draw Polaris path circle
-    ctx.strokeStyle = lineLightColor;
+    ctx.strokeStyle = textColor;
     ctx.lineWidth = 1.5;
     ctx.setLineDash([3, 5]);
     ctx.beginPath();
@@ -110,9 +108,7 @@ function drawPolarScope(canvas, lst) {
     
     // Draw Polaris with glow
     pulseSize += 0.1 * pulseDirection;
-    if (pulseSize > 4 || pulseSize < -1) {
-        pulseDirection *= -1;
-    }
+    if (pulseSize > 4 || pulseSize < -1) pulseDirection *= -1;
 
     ctx.save();
     ctx.fillStyle = accentColor;
@@ -128,7 +124,6 @@ function drawPolarScope(canvas, lst) {
     ctx.beginPath();
     ctx.arc(polarisPos.x, polarisPos.y, 7, 0, 2 * Math.PI);
     ctx.stroke();
-
 
     const infoEl = document.getElementById('polar-align-info');
     if (infoEl) {

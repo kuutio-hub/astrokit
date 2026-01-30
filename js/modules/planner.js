@@ -2,12 +2,15 @@
 import { messierObjects } from '../data/objects.js';
 import { planets } from '../data/planets.js';
 import { constellationNames } from '../data/constellations.js';
+import { zodiac } from '../data/zodiac.js';
 
 let lat, lon;
 let updateInterval;
 let allObjects = [];
 
 const $ = (id) => document.getElementById(id);
+const toRad = (deg) => deg * Math.PI / 180;
+const toDeg = (rad) => rad * 180 / Math.PI;
 
 export function initPlanner(_lat, _lon) {
     lat = _lat;
@@ -63,53 +66,75 @@ function populateFilters() {
     });
 }
 
-function getPlanetPosition(planet, date) {
-    // Nagyon egyszerűsített, közelítő számítás a bolygók helyzetére.
-    // Professzionális alkalmazáshoz bonyolultabb csillagászati modellek (pl. VSOP87) kellenének.
-    // Ez a közelítés a legtöbb vizuális észleléshez elegendő pontosságot ad.
-    const jd = (date.getTime() / 86400000) - (date.getTimezoneOffset() / 1440) + 2440587.5;
-    const d = jd - 2451545.0;
-
-    const sunEclipticLng = (280.460 + 0.9856474 * d) % 360;
+function getPlanetPosition(planet, date, sun) {
+    // This is a simplified model for educational purposes. It calculates an approximate
+    // geocentric position, which is good enough for finding the planet and its constellation.
+    // It doesn't account for all perturbations.
     
-    const { M, a, e, i, W, w, L } = planet.orbit;
-    
-    const meanAnomaly = (M + (360 / a) * (d / 365.25)) % 360;
-    
-    // Egyszerűsített L (Longitúdó) a Nap körüli pozícióhoz
-    const eclipticLng = (L + 0.9856 * d) % 360;
+    // Planet's heliocentric coordinates
+    const M_p = toRad((planet.orbit.M + (360 / planet.orbit.a_days) * sun.d) % 360);
+    const w_p = toRad(planet.orbit.w);
+    const e_p = planet.orbit.e;
+    let E_p = M_p + e_p * Math.sin(M_p) * (1.0 + e_p * Math.cos(M_p)); // Kepler's equation approx.
+    const xv_p = Math.cos(E_p) - e_p;
+    const yv_p = Math.sqrt(1.0 - e_p*e_p) * Math.sin(E_p);
+    const v_p = Math.atan2(yv_p, xv_p); // True anomaly
+    const r_p = Math.sqrt(xv_p*xv_p + yv_p*yv_p); // Distance from sun
+    const l_p = v_p + w_p; // Heliocentric longitude
 
-    // Nagyon durva közelítés, ami nem veszi figyelembe a bolygók relatív pozícióját.
-    // A valóságban a Föld és a bolygó helyzetéből kellene számolni.
-    // Itt most az egyszerűség kedvéért a Nap-centrikus pozíciót használjuk egy eltolással.
-    let ra = (sunEclipticLng + 180 + (eclipticLng - sunEclipticLng)) % 360;
+    // Geocentric coordinates
+    const xg = r_p * Math.cos(l_p) - sun.r * Math.cos(sun.l);
+    const yg = r_p * Math.sin(l_p) - sun.r * Math.sin(sun.l);
+
+    let geocentric_lon = toDeg(Math.atan2(yg, xg));
+    if(geocentric_lon < 0) geocentric_lon += 360;
+
+    // Very simplified RA/Dec conversion (assumes 0 ecliptic latitude)
+    const ecl = toRad(23.4397);
+    const ra = Math.atan2(Math.sin(toRad(geocentric_lon)) * Math.cos(ecl), Math.cos(toRad(geocentric_lon)));
+    const dec = Math.asin(Math.sin(ecl) * Math.sin(toRad(geocentric_lon)));
     
-    // Konvertálás órára
-    ra = ra / 15;
-
-    // Deklinációt itt nem számolunk, közelítőleg 0-nak vesszük az ekliptikán
-    const dec = 0;
-
-    return { ra: [ra, 0, 0], dec: [dec, 0, 0] };
+    return { 
+        ra: [toDeg(ra) / 15, 0, 0], 
+        dec: [toDeg(dec), 0, 0],
+        ecliptic_lon: geocentric_lon
+    };
 }
 
+function getConstellationFromLongitude(lon) {
+    const constellation = zodiac.find(c => lon >= c.start && lon < c.end);
+    return constellation ? constellation.name : 'Változó';
+}
 
 function calculatePositions() {
     const now = new Date();
     const lst = calculateSiderealTime(now, lon);
     
+    // Sun position needed for planet calculations
+    const jd = now.getTime() / 86400000 - (now.getTimezoneOffset() / 1440) + 2440587.5;
+    const d = jd - 2451545.0;
+    const M_sun = toRad((357.5291 + 0.98560028 * d) % 360);
+    const e_sun = 0.0167086;
+    let E_sun = M_sun + e_sun * Math.sin(M_sun) * (1.0 + e_sun * Math.cos(M_sun));
+    const xv_sun = Math.cos(E_sun) - e_sun;
+    const yv_sun = Math.sqrt(1.0 - e_sun*e_sun) * Math.sin(E_sun);
+    const v_sun = Math.atan2(yv_sun, xv_sun); // True anomaly
+    const r_sun = Math.sqrt(xv_sun*xv_sun + yv_sun*yv_sun); // Distance
+    const l_sun = v_sun + toRad((282.9372) % 360); // Longitude of perihelion
+    const sun_pos = {d, l: l_sun, r: r_sun};
+
     allObjects.forEach(obj => {
         let raDec = { ra: obj.ra, dec: obj.dec };
         if (obj.type === 'Bolygó') {
-            // A bolygók pozíciója folyamatosan változik, ezért minden alkalommal újra kell számolni.
-            raDec = getPlanetPosition(obj, now);
+            const pos = getPlanetPosition(obj, now, sun_pos);
+            raDec = { ra: pos.ra, dec: pos.dec };
+            obj.const = getConstellationFromLongitude(pos.ecliptic_lon);
         }
         const { alt, az } = getAltAz(raDec.ra, raDec.dec, lat, lon, lst);
         obj.alt = alt;
         obj.az = az;
     });
 }
-
 
 function filterAndRender() {
     const searchTerm = $('planner-search').value.toLowerCase();
@@ -121,7 +146,7 @@ function filterAndRender() {
         const nameMatch = obj.name.toLowerCase().includes(searchTerm) || obj.id.toLowerCase().includes(searchTerm);
         const typeMatch = typeFilter === 'all' || obj.type === typeFilter;
         const constMatch = constFilter === 'all' || obj.const === constFilter;
-        const visibleMatch = !visibleOnly || obj.alt > 1; // 1 fokos határ
+        const visibleMatch = !visibleOnly || obj.alt > 1; 
         return nameMatch && typeMatch && constMatch && visibleMatch;
     });
     
@@ -171,8 +196,8 @@ function showObjectDetails(obj) {
     const modal = document.getElementById('app-modal');
     const modalBody = document.getElementById('modal-body');
 
-    const raText = obj.ra ? `${obj.ra[0]}h ${obj.ra[1]}m ${obj.ra[2].toFixed(0)}s` : 'Változó';
-    const decText = obj.dec ? `${obj.dec[0]}° ${obj.dec[1]}' ${obj.dec[2].toFixed(0)}"` : 'Változó';
+    const raText = obj.ra ? `${obj.ra[0].toFixed(0)}h ${Math.abs(obj.ra[1]).toFixed(0)}m ${Math.abs(obj.ra[2]).toFixed(0)}s` : 'Változó';
+    const decText = obj.dec ? `${obj.dec[0].toFixed(0)}° ${Math.abs(obj.dec[1]).toFixed(0)}' ${Math.abs(obj.dec[2]).toFixed(0)}"` : 'Változó';
 
     modalBody.innerHTML = `
         <h3>${obj.name} (${obj.id})</h3>
@@ -180,7 +205,7 @@ function showObjectDetails(obj) {
         <ul class="data-list">
             <li><span class="label">Típus</span> <span class="value">${obj.type}</span></li>
             <li><span class="label">Csillagkép</span> <span class="value">${constellationNames[obj.const] || obj.const}</span></li>
-            <li><span class="label">Távolság</span> <span class="value">${obj.dist_ly ? `${obj.dist_ly} fényév` : 'N/A'}</span></li>
+            <li><span class="label">Távolság</span> <span class="value">${obj.dist_ly ? `${obj.dist_ly} fényév` : 'Változó'}</span></li>
             <li><span class="label">Aktuális magasság</span> <span class="value">${obj.alt.toFixed(2)}°</span></li>
             <li><span class="label">Rektaszcenzió</span> <span class="value">${raText}</span></li>
             <li><span class="label">Deklináció</span> <span class="value">${decText}</span></li>
@@ -188,11 +213,6 @@ function showObjectDetails(obj) {
     `;
     modal.style.display = 'flex';
 }
-
-// --- Coordinate Transformation ---
-
-function toRad(deg) { return deg * Math.PI / 180; }
-function toDeg(rad) { return rad * 180 / Math.PI; }
 
 function calculateSiderealTime(date, longitude) {
     const d = new Date(date);
@@ -223,9 +243,7 @@ function getAltAz(raArr, decArr, lat, lon, lst) {
     const cosAz = (Math.sin(decRad) - Math.sin(latRad) * sinAlt) / (Math.cos(latRad) * Math.cos(toRad(alt)));
     let az = toDeg(Math.acos(cosAz));
 
-    if (Math.sin(haRad) > 0) {
-        az = 360 - az;
-    }
+    if (Math.sin(haRad) > 0) az = 360 - az;
 
     return { alt, az };
 }
