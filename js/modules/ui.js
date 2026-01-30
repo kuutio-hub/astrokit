@@ -133,59 +133,102 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
     container.innerHTML = dashboardHTML;
     const canvas = document.getElementById('moon-visual-canvas');
     if (canvas) {
-        updateMoonVisual(canvas, moonIllumination.phase);
+        updateMoonVisual(canvas, moonIllumination.phase, moonIllumination.angle);
     }
     
     updateMoonPosition(lat, lon);
     setInterval(() => updateMoonPosition(lat, lon), 60000);
 }
 
+function drawCraters(ctx, radius, isLit) {
+    const craterCount = 25;
+    for (let i = 0; i < craterCount; i++) {
+        const angle = Math.random() * 2 * Math.PI;
+        const dist = Math.random() * radius * 0.9;
+        const x = radius + Math.cos(angle) * dist;
+        const y = radius + Math.sin(angle) * dist;
+
+        if (isLit(x, y)) {
+            const craterRadius = (Math.random() * 2 + 1) * (1 - dist / radius);
+            ctx.beginPath();
+            ctx.arc(x, y, craterRadius, 0, 2 * Math.PI);
+            ctx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.1 + 0.05})`;
+            ctx.fill();
+
+            // Rim light
+            const rimAngle = angle + Math.PI * 1.1;
+            const rimX = x + Math.cos(rimAngle) * 0.2;
+            const rimY = y + Math.sin(rimAngle) * 0.2;
+            ctx.beginPath();
+            ctx.arc(rimX, rimY, craterRadius * 0.9, 0, 2 * Math.PI);
+            ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.08})`;
+            ctx.fill();
+        }
+    }
+}
+
 function updateMoonVisual(canvas, phase) {
     const ctx = canvas.getContext('2d');
     const { width, height } = canvas;
-    const r = width / 2; // radius and center x/y
+    const r = width / 2;
 
     ctx.clearRect(0, 0, width, height);
 
     const litGradient = ctx.createRadialGradient(r*0.6, r*0.6, 0, r, r, r);
-    litGradient.addColorStop(0, '#f0f0f0');
-    litGradient.addColorStop(1, '#aaa');
+    litGradient.addColorStop(0, '#f8f8f8');
+    litGradient.addColorStop(1, '#c0c0c0');
     
     const darkGradient = ctx.createRadialGradient(r*1.4, r*1.4, r*1.2, r, r, r);
-    darkGradient.addColorStop(0, '#33373D');
-    darkGradient.addColorStop(1, '#222');
+    darkGradient.addColorStop(0, '#4a4a4a');
+    darkGradient.addColorStop(1, '#2c2c2c');
 
-    // Draw the full circle with the appropriate base color
-    if (phase < 0.5) { // Waxing, dark base
-        ctx.fillStyle = darkGradient;
-    } else { // Waning, lit base
-        ctx.fillStyle = litGradient;
-    }
+    ctx.fillStyle = darkGradient;
     ctx.beginPath();
     ctx.arc(r, r, r, 0, 2 * Math.PI);
     ctx.fill();
 
-    // The lit part
-    ctx.fillStyle = litGradient;
-    ctx.beginPath();
-
-    // The terminator's horizontal radius
     const terminatorXRadius = r * Math.cos(phase * 2 * Math.PI);
-    
+
+    // Save the clipping region for craters
+    ctx.save();
+    ctx.beginPath();
     if (phase < 0.5) { // Waxing
-        // Lit right half
         ctx.arc(r, r, r, -Math.PI/2, Math.PI/2, false);
-        // Terminator ellipse
         ctx.ellipse(r, r, Math.abs(terminatorXRadius), r, 0, Math.PI/2, -Math.PI/2, true);
     } else { // Waning
-        // Lit left half
         ctx.arc(r, r, r, Math.PI/2, -Math.PI/2, false);
-        // Terminator ellipse
         ctx.ellipse(r, r, Math.abs(terminatorXRadius), r, 0, -Math.PI/2, Math.PI/2, true);
     }
-    ctx.fill();
-}
+    ctx.clip();
+    
+    // Fill clipped area
+    ctx.fillStyle = litGradient;
+    ctx.fillRect(0, 0, width, height);
+    
+    // Draw craters within the clipped (lit) area
+    drawCraters(ctx, r, (x, y) => ctx.isPointInPath(x, y));
 
+    ctx.restore(); // Remove clipping
+
+    // Soften the terminator edge
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(r, r, Math.abs(terminatorXRadius), r, 0, 0, 2 * Math.PI);
+    ctx.clip();
+
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 4;
+    
+    if (phase < 0.5) { // Waxing
+        ctx.shadowOffsetX = 2;
+    } else { // Waning
+        ctx.shadowOffsetX = -2;
+    }
+    
+    ctx.fillStyle = phase < 0.5 ? darkGradient : litGradient;
+    ctx.fillRect(phase < 0.5 ? -width : 0, 0, width, height);
+    ctx.restore();
+}
 
 function updateMoonPosition(lat, lon) {
     const now = new Date();

@@ -84,10 +84,11 @@
                              <thead>
                                  <tr>
                                      <th>Név</th>
-                                     <th>Típus</th>
+                                     <th>Típus / Időpontok</th>
                                      <th>Csillagkép</th>
                                      <th>Magasság</th>
                                      <th>Láthatóság</th>
+                                     <th>Részletek</th>
                                  </tr>
                              </thead>
                              <tbody id="planner-table-body">
@@ -194,7 +195,7 @@
                 <h2><i class="ph-sun-horizon"></i> Helyi Analemma</h2>
                 <div class="card">
                     <p class="description">
-                        A Föld pályájának és tengelyferdeségének köszönhetően a Nap déli pozíciója egy jellegzetes 'nyolcas' alakot, az analemmát rajzolja ki az év során. A görbe alakja függ a földrajzi szélességtől; az Egyenlítőhöz közelebb laposabb, a sarkok felé nyújtottabb. A számítás a delelés időpontjára történik, ami az Ön időzónájában kb. <strong id="analemma-local-time">--:--</strong>.
+                        Az analemma a Nap pozícióját mutatja az év minden napján, <strong>mindig ugyanabban az időpontban</strong>. Esetünkben ez a helyi dél, amikor a Nap a legmagasabban jár az égen. Ez a "déli analemma" a tudományos és csillagászati standard ábrázolás. Fontos tudni, hogy ha más időpontot választanánk (pl. minden nap délután 3-kor), a görbe alakja az Időegyenlet hatása miatt más lenne.
                     </p>
                     <div class="canvas-container">
                          <canvas id="analemma-canvas" width="600" height="400"></canvas>
