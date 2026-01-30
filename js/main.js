@@ -8,7 +8,7 @@ import { initAnalemma } from './modules/analemma.js';
 import { initCalendar } from './modules/calendar.js';
 import { initWiki } from './modules/wiki.js';
 
-const APP_VERSION = 'v1.4.0';
+const APP_VERSION = 'v0.5.0';
 
 document.addEventListener('DOMContentLoaded', async () => {
     displayVersion();

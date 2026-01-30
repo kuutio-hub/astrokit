@@ -77,7 +77,7 @@ function calculateAnalemma(lat, lon) {
         positions.push({
             date: solarNoon,
             altitude: pos.altitude * 180 / Math.PI,
-            azimuth: pos.azimuth * 180 / Math.PI
+            azimuth: pos.azimuth * 180 / Math.PI 
         });
     }
     return positions;
@@ -95,10 +95,21 @@ function drawAnalemma(canvas, sunPositions) {
 
     const minAlt = Math.min(...sunPositions.map(p => p.altitude));
     const maxAlt = Math.max(...sunPositions.map(p => p.altitude));
-    const minAz = Math.min(...sunPositions.map(p => p.azimuth));
-    const maxAz = Math.max(...sunPositions.map(p => p.azimuth));
     const altRange = maxAlt - minAlt;
-    const azRange = maxAz - minAz;
+
+    // Azimuth is measured from South (0). Find max deviation.
+    const azValues = sunPositions.map(p => p.azimuth);
+    const maxAbsAz = Math.max(...azValues.map(az => Math.abs(az - 180)));
+    const azRange = maxAbsAz * 2;
+    
+    // Maintain aspect ratio: determine scale based on larger range
+    const degPerPixelX = azRange / plotWidth;
+    const degPerPixelY = altRange / plotHeight;
+    const degPerPixel = Math.max(degPerPixelX, degPerPixelY);
+
+    const scaledPlotWidth = azRange / degPerPixel;
+    const scaledPlotHeight = altRange / degPerPixel;
+
 
     const specialPoints = [
         { day: 0, label: 'Téli napforduló', color: '#58a6ff' }, // Winter Solstice
@@ -108,8 +119,12 @@ function drawAnalemma(canvas, sunPositions) {
     ].map(p => ({ ...p, pos: sunPositions[p.day] }));
 
     const getCanvasCoords = (pos) => {
-        const x = padding + ((pos.azimuth - minAz) / azRange) * plotWidth;
-        const y = (height - padding) - ((pos.altitude - minAlt) / altRange) * plotHeight;
+        // Center of plot area
+        const centerX = padding + plotWidth / 2;
+        const centerY = padding + plotHeight / 2;
+        // Map degrees to pixels
+        const x = centerX + ((pos.azimuth - 180) / degPerPixel);
+        const y = centerY - ((pos.altitude - (minAlt + altRange / 2)) / degPerPixel);
         return { x, y };
     };
 
@@ -119,21 +134,12 @@ function drawAnalemma(canvas, sunPositions) {
         ctx.strokeStyle = styles.getPropertyValue('--border-color').trim();
         ctx.fillStyle = styles.getPropertyValue('--text-color').trim();
         ctx.font = "12px sans-serif";
-        ctx.beginPath();
-        ctx.moveTo(padding, height - padding);
-        ctx.lineTo(width - padding, height - padding);
-        ctx.moveTo(padding, padding);
-        ctx.lineTo(padding, height - padding);
-        ctx.stroke();
-        ctx.textAlign = 'right';
-        ctx.fillText(`${Math.ceil(maxAlt)}°`, padding - 8, padding + 5);
-        ctx.fillText(`${Math.floor(minAlt)}°`, padding - 8, height - padding);
         ctx.textAlign = 'center';
-        ctx.fillText('Azimut (Délhez képest)', width / 2, height - padding + 25);
+        ctx.fillText("Dél", padding + plotWidth/2, height - padding + 25);
         ctx.save();
-        ctx.translate(padding - 30, height / 2);
-        ctx.rotate(-Math.PI / 2);
-        ctx.fillText('Magasság', 0, 0);
+        ctx.translate(padding - 35, height/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.fillText("Magasság", 0, 0);
         ctx.restore();
 
         sunPositions.forEach(pos => {
