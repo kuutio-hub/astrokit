@@ -1,0 +1,7 @@
+{
+  "name": "Amatőrcsillagász Svájci Bicska",
+  "description": "Egy minden-az-egyben webalkalmazás magyar amatőrcsillagászok számára, tele helyi csillagászati adatokkal, számológépekkel, asztrofotós segédlettel és eseménynaptárral. Kifejezetten statikus hosztolásra (pl. GitHub Pages) tervezve, build lépés nélkül.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

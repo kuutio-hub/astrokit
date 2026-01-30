@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amatőrcsillagász Svájci Bicska</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔭</text></svg>">
+    <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
+    <script src="https://unpkg.com/phosphor-icons"></script>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1><i class="ph-shooting-star"></i> Amatőrcsillagász Svájci Bicska</h1>
+            <p>Helyi adatok, kalkulátorok és segédletek egy helyen</p>
+        </header>
+
+        <nav>
+            <a href="#dashboard" class="nav-item active" data-target="dashboard"><i class="ph-gauge"></i> Műszerfal</a>
+            <a href="#calculators" class="nav-item" data-target="calculators"><i class="ph-calculator"></i> Kalkulátorok</a>
+            <a href="#astrophoto" class="nav-item" data-target="astrophoto"><i class="ph-camera"></i> Asztrofotó</a>
+            <a href="#analemma" class="nav-item" data-target="analemma"><i class="ph-sun-horizon"></i> Analemma</a>
+            <a href="#calendar" class="nav-item" data-target="calendar"><i class="ph-calendar"></i> Naptár</a>
+        </nav>
+
+        <main>
+            <div id="loader" class="loader-container">
+                <div class="loader"></div>
+                <p>Helymeghatározás és adatok betöltése...</p>
+            </div>
+            
+            <div id="error-container" class="error-container" style="display: none;"></div>
+
+            <section id="dashboard" class="content-section active">
+                <!-- Dashboard content will be injected by JS -->
+            </section>
+
+            <section id="calculators" class="content-section">
+                <h2><i class="ph-calculator"></i> Csillagászati Kalkulátorok</h2>
+                <div class="calculators-grid">
+                    <div class="card">
+                        <h3>Nagyítás</h3>
+                        <form id="calc-magnification">
+                            <label>Távcső fókusztávolsága (mm): <input type="number" id="mag-f-tele" value="1000" required></label>
+                            <label>Okulár fókusztávolsága (mm): <input type="number" id="mag-f-eye" value="10" required></label>
+                            <p class="result">Eredmény: <span id="mag-result">100x</span></p>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <h3>Valós Látómező</h3>
+                        <form id="calc-fov">
+                             <label>Okulár látómezeje (°): <input type="number" id="fov-afov" value="52" required></label>
+                             <label>Nagyítás (x): <input type="number" id="fov-mag" value="100" required></label>
+                             <p class="result">Eredmény: <span id="fov-result">0.52°</span></p>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <h3>Kilépő Pupilla</h3>
+                        <form id="calc-exit-pupil">
+                            <label>Távcső átmérője (mm): <input type="number" id="ep-aperture" class="aperture-input" value="120" required></label>
+                            <label>Nagyítás (x): <input type="number" id="ep-mag" value="100" required></label>
+                            <p class="result">Eredmény: <span id="ep-result">1.2 mm</span></p>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <h3>Felbontóképesség (Dawes-limit)</h3>
+                        <form id="calc-resolution">
+                            <label>Távcső átmérője (mm): <input type="number" id="res-aperture" class="aperture-input" value="120" required></label>
+                            <p class="result">Eredmény: <span id="res-result">0.97"</span></p>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <h3>Maximális Hasznos Nagyítás</h3>
+                        <form id="calc-max-mag">
+                            <label>Távcső átmérője (mm): <input type="number" id="max-mag-aperture" class="aperture-input" value="120" required></label>
+                            <p class="description">Ökölszabály: az átmérő milliméterben vett értékének kétszerese.</p>
+                            <p class="result">Eredmény: <span id="max-mag-result">240x</span></p>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <section id="astrophoto" class="content-section">
+                <h2><i class="ph-camera"></i> Asztrofotós Segédlet</h2>
+                <div class="card">
+                    <h3>Maximális Expozíciós Idő (300-as szabály)</h3>
+                    <p class="description">Becslés a csillagok bemozdulásmentes fotózásához álló állványról (követés nélkül). Ez egy ökölszabály, az eredmény függ a kamera szenzorától és a megfigyelő igényeitől is.</p>
+                    <form id="calc-exposure">
+                        <label>Objektív fókusztávolsága (mm): <input type="number" id="exp-focal-length" value="18" required></label>
+                        <label>Szenzor típusa: 
+                            <select id="exp-sensor-crop">
+                                <option value="1">Full Frame</option>
+                                <option value="1.5">APS-C (Nikon, Sony)</option>
+                                <option value="1.6">APS-C (Canon)</option>
+                                <option value="2">Mikro NégyHarmad</option>
+                            </select>
+                        </label>
+                        <p class="result">Maximális expozíció: <span id="exp-result">11.11 s</span></p>
+                    </form>
+                </div>
+            </section>
+
+            <section id="analemma" class="content-section">
+                <h2><i class="ph-sun-horizon"></i> Helyi Analemma</h2>
+                <div class="card">
+                    <p class="description">A Nap látszólagos helyzete az égen minden nap ugyanabban az időpontban (helyi dél) egy éven keresztül. A számítás eltarthat néhány másodpercig.</p>
+                    <button id="draw-analemma-btn" class="button-primary">Analemma Kirajzolása</button>
+                    <div class="canvas-container">
+                         <canvas id="analemma-canvas" width="600" height="400"></canvas>
+                         <div id="analemma-loader" class="loader-container" style="display: none;">
+                            <div class="loader"></div>
+                            <p>Analemma számítása...</p>
+                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="calendar" class="content-section">
+                <h2><i class="ph-calendar"></i> Csillagászati Eseménynaptár (2026)</h2>
+                <div class="card">
+                    <p class="description">Jelentősebb csillagászati események 2026-ban. Add hozzá a naptáradhoz az alábbi gombbal, hogy ne maradj le semmiről!</p>
+                    <a href="data/events_2026.ics" class="button-primary" download="csillagasz_naptar_2026.ics"><i class="ph-download-simple"></i> .ICS Naptárfájl letöltése</a>
+                    <div id="calendar-preview">
+                        <h3>Előnézet</h3>
+                        <ul>
+                            <li><strong>Január 3-4:</strong> Quadrantidák meteorraj maximuma</li>
+                            <li><strong>Március 3:</strong> Teljes holdfogyatkozás (Magyarországról a vége látszik)</li>
+                            <li><strong>Március 20:</strong> Tavaszi napéjegyenlőség</li>
+                            <li><strong>Április 22-23:</strong> Lyridák meteorraj maximuma</li>
+                            <li><strong>Május 6-7:</strong> Eta Aquaridák meteorraj maximuma</li>
+                            <li><strong>Június 21:</strong> Nyári napforduló</li>
+                            <li><strong>Augusztus 12:</strong> Részleges napfogyatkozás (Izlandon és Spanyolországban teljes)</li>
+                            <li><strong>Augusztus 12-13:</strong> Perseidák meteorraj maximuma</li>
+                            <li><strong>Augusztus 28:</strong> Részleges holdfogyatkozás</li>
+                            <li><strong>Szeptember 22:</strong> Őszi napéjegyenlőség</li>
+                            <li><strong>Október 21-22:</strong> Orionidák meteorraj maximuma</li>
+                            <li><strong>November 17-18:</strong> Leonidák meteorraj maximuma</li>
+                            <li><strong>December 13-14:</strong> Geminidák meteorraj maximuma</li>
+                            <li><strong>December 21:</strong> Téli napforduló</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Készült szeretettel magyar csillagászoknak. | Javaslatok, ötletek: [email címed] </p>
+        </footer>
+    </div>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
