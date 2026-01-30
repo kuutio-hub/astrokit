@@ -1,131 +1,193 @@
 
+const GEAR_STORAGE_KEY = 'astroGearSettings';
+let gearSettings = {};
+
+// --- Helper Functions ---
+const $ = (selector, parent = document) => parent.querySelector(selector);
+const $$ = (selector, parent = document) => parent.querySelectorAll(selector);
+const degToRad = (deg) => deg * Math.PI / 180;
+const radToDeg = (rad) => rad * 180 / Math.PI;
+
+// --- Main Initialization ---
 export function initCalculators() {
-    setupMagnificationCalculator();
-    setupFovCalculator();
-    setupExitPupilCalculator();
-    setupResolutionCalculator();
-    setupMaxUsefulMagnificationCalculator();
-    syncApertureInputs();
+    loadGearSettings();
+    setupMainGearForm();
+    setupCalculatorNavigation();
+    setupFormulaTooltips();
+
+    // Initialize all individual calculators
+    initAllCalculatorLogic();
+
+    syncAllCalculators();
 }
 
-function syncApertureInputs() {
-    const apertureInputs = document.querySelectorAll('.aperture-input');
-    let isSyncing = false;
+// --- Gear Management ---
+function loadGearSettings() {
+    const saved = localStorage.getItem(GEAR_STORAGE_KEY);
+    gearSettings = saved ? JSON.parse(saved) : {
+        teleFocalLength: 1000,
+        teleAperture: 120,
+        eyeFocalLength: 10,
+        eyeAFOV: 52
+    };
+}
 
-    apertureInputs.forEach(input => {
-        input.addEventListener('input', (e) => {
-            if (isSyncing) return; // Prevent event loops
+function saveGearSettings() {
+    localStorage.setItem(GEAR_STORAGE_KEY, JSON.stringify(gearSettings));
+}
 
-            isSyncing = true;
-            const value = e.target.value;
-            apertureInputs.forEach(otherInput => {
-                if (otherInput !== e.target) {
-                    otherInput.value = value;
-                    // Dispatch event to trigger recalculation in other cards
-                    otherInput.dispatchEvent(new Event('input', { bubbles: true }));
-                }
-            });
-            // A 'setTimeout' ensures the flag is reset after the current event stack is cleared
-            setTimeout(() => { isSyncing = false; }, 0);
+function setupMainGearForm() {
+    const form = $('#main-gear-form');
+    if (!form) return;
+
+    // Populate form from loaded settings
+    for (const key in gearSettings) {
+        if (form.elements[key]) {
+            form.elements[key].value = gearSettings[key];
+        }
+    }
+
+    form.addEventListener('input', (e) => {
+        const key = e.target.name;
+        const value = parseFloat(e.target.value);
+        if (!isNaN(value)) {
+            gearSettings[key] = value;
+            saveGearSettings();
+            syncAllCalculators();
+        }
+    });
+}
+
+function syncAllCalculators() {
+    $$('.calculator-card form').forEach(form => {
+        for (const key in gearSettings) {
+            if (form.elements[key]) {
+                form.elements[key].value = gearSettings[key];
+            }
+        }
+        // Trigger calculation after sync
+        form.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+}
+
+// --- UI and Navigation ---
+function setupCalculatorNavigation() {
+    const links = $$('.calc-nav-link');
+    const cards = $$('.calculator-card');
+
+    links.forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            const targetId = link.getAttribute('href').substring(1);
+
+            links.forEach(l => l.classList.remove('active'));
+            cards.forEach(c => c.classList.remove('active'));
+
+            link.classList.add('active');
+            $(`#${targetId}`).classList.add('active');
         });
     });
 }
 
+function setupFormulaTooltips() {
+    const tooltip = $('#formula-tooltip');
+    document.body.addEventListener('click', e => {
+        if (e.target.classList.contains('info-icon')) {
+            const formula = e.target.dataset.formula;
+            tooltip.textContent = formula;
 
-function setupMagnificationCalculator() {
-    const form = document.getElementById('calc-magnification');
-    const fTeleInput = document.getElementById('mag-f-tele');
-    const fEyeInput = document.getElementById('mag-f-eye');
-    const resultSpan = document.getElementById('mag-result');
-
-    const calculate = () => {
-        const fTele = parseFloat(fTeleInput.value);
-        const fEye = parseFloat(fEyeInput.value);
-        if (fTele > 0 && fEye > 0) {
-            const magnification = fTele / fEye;
-            resultSpan.textContent = `${magnification.toFixed(1)}x`;
-            // Update other calculators that depend on magnification
-            const fovMagInput = document.getElementById('fov-mag');
-            const epMagInput = document.getElementById('ep-mag');
-            if (fovMagInput) fovMagInput.value = magnification.toFixed(1);
-            if (epMagInput) epMagInput.value = magnification.toFixed(1);
-            if (fovMagInput) fovMagInput.dispatchEvent(new Event('input'));
-            if (epMagInput) epMagInput.dispatchEvent(new Event('input'));
+            const rect = e.target.getBoundingClientRect();
+            tooltip.style.left = `${rect.left + window.scrollX}px`;
+            tooltip.style.top = `${rect.bottom + window.scrollY + 5}px`;
+            tooltip.style.display = 'block';
+        } else {
+            tooltip.style.display = 'none';
         }
-    };
-
-    form.addEventListener('input', calculate);
-    calculate();
+    });
 }
 
-function setupFovCalculator() {
-    const form = document.getElementById('calc-fov');
-    const afovInput = document.getElementById('fov-afov');
-    const magInput = document.getElementById('fov-mag');
-    const resultSpan = document.getElementById('fov-result');
+// --- Individual Calculator Logic ---
+function initAllCalculatorLogic() {
+    // Telescope
+    setupCalc('magnification', ['teleFocalLength', 'eyeFocalLength'], vals => vals.eyeFocalLength > 0 ? vals.teleFocalLength / vals.eyeFocalLength : 0, 1);
+    setupCalc('focal-ratio', ['teleFocalLength', 'teleAperture'], vals => vals.teleAperture > 0 ? vals.teleFocalLength / vals.teleAperture : 0, 1);
+    setupCalc('focal-length', ['teleAperture', 'focalRatio'], vals => vals.teleAperture * vals.focalRatio, 1);
+    setupCalc('eyepiece-magnification', ['teleFocalLength', 'magnification'], vals => vals.magnification > 0 ? vals.teleFocalLength / vals.magnification : 0, 1);
+    setupCalc('max-magnification', ['teleAperture'], vals => Math.min(350, vals.teleAperture * 2.5), 0);
+    setupCalc('dawes-limit', ['teleAperture'], vals => vals.teleAperture > 0 ? 116 / vals.teleAperture : 0, 2);
+    setupCalc('rayleigh-limit', ['teleAperture'], vals => vals.teleAperture > 0 ? 138 / vals.teleAperture : 0, 2);
+    setupCalc('limiting-magnitude', ['teleAperture'], vals => vals.teleAperture > 0 ? 7.7 + (5 * Math.log10(vals.teleAperture / 10)) : 0, 2);
+    setupCalc('light-grasp', ['aperture1', 'aperture2'], vals => vals.aperture2 > 0 ? Math.pow(vals.aperture1, 2) / Math.pow(vals.aperture2, 2) : 0, 0);
 
-    const calculate = () => {
-        const afov = parseFloat(afovInput.value);
-        const mag = parseFloat(magInput.value);
-        if (afov > 0 && mag > 0) {
-            const fov = afov / mag;
-            resultSpan.textContent = `${fov.toFixed(2)}°`;
-        }
-    };
+    // This one is special, needs to be calculated from magnification
+    const trueFovForm = $('#form-true-fov');
+    trueFovForm.addEventListener('input', () => {
+        const eyeAFOV = parseFloat(trueFovForm.elements.eyeAFOV.value) || 0;
+        const mag = parseFloat(trueFovForm.elements.magnification.value) || 0;
+        $('#res-true-fov').textContent = mag > 0 ? (eyeAFOV / mag).toFixed(2) : 'N/A';
+    });
+    // Link magnification to main gear magnification
+    const magInput = $('#form-magnification input[name=teleFocalLength]');
+    magInput.addEventListener('input', () => { // Bit of a hack to get notification
+        const mag = parseFloat($('#res-magnification').textContent) || 0;
+        trueFovForm.elements.magnification.value = mag.toFixed(1);
+        trueFovForm.dispatchEvent(new Event('input'));
+    });
+    
 
-    form.addEventListener('input', calculate);
-    calculate();
+    // Binocular
+    setupCalc('bino-real-fov-deg', ['fov_deg'], vals => Math.tan(degToRad(vals.fov_deg)) * 1000, 1);
+    setupCalc('bino-real-fov-m', ['fov_m'], vals => radToDeg(Math.atan(vals.fov_m / 1000)), 2);
+    setupCalc('bino-apparent-fov-simple', ['real_fov', 'magnification'], vals => vals.real_fov * vals.magnification, 2);
+    setupCalc('bino-apparent-fov-iso', ['real_fov', 'magnification'], vals => {
+        return 2 * radToDeg(Math.atan(vals.magnification * Math.tan(degToRad(vals.real_fov / 2))));
+    }, 2);
+    
+    // CCD
+    setupCalc('ccd-resolution', ['pixelSize', 'teleFocalLength'], vals => vals.teleFocalLength > 0 ? (vals.pixelSize / vals.teleFocalLength) * 206.265 : 0, 2);
+    setupCalc('ccd-pixel-size', ['chipSize', 'resolution'], vals => vals.resolution > 0 ? (vals.chipSize / vals.resolution) * 1000 : 0, 2);
+    setupCalc('ccd-chip-size', ['pixelSize', 'resolution'], vals => (vals.pixelSize * vals.resolution) / 1000, 2);
+    setupCalc('dust-reflection', ['pixelSize', 'focalRatio', 'shadow_px'], vals => (vals.pixelSize / 1000) * vals.focalRatio * vals.shadow_px, 3);
+    
+    // Converter
+    const inMmForm = $('#form-in-mm');
+    const inchesInput = inMmForm.elements.inches;
+    const mmInput = inMmForm.elements.mm;
+    inchesInput.addEventListener('input', () => {
+       const inches = parseFloat(inchesInput.value);
+       if (!isNaN(inches)) mmInput.value = (inches * 25.4).toFixed(2);
+    });
+    mmInput.addEventListener('input', () => {
+       const mm = parseFloat(mmInput.value);
+       if (!isNaN(mm)) inchesInput.value = (mm / 25.4).toFixed(3);
+    });
 }
 
-function setupExitPupilCalculator() {
-    const form = document.getElementById('calc-exit-pupil');
-    const apertureInput = document.getElementById('ep-aperture');
-    const magInput = document.getElementById('ep-mag');
-    const resultSpan = document.getElementById('ep-result');
+/**
+ * Generic function to set up a calculator.
+ * @param {string} id - The base ID for the calculator (e.g., 'magnification').
+ * @param {string[]} inputNames - An array of input names from the form.
+ * @param {function} formula - The calculation function.
+ * @param {number} precision - Number of decimal places for the result.
+ */
+function setupCalc(id, inputNames, formula, precision) {
+    const form = $(`#form-${id}`);
+    const resultEl = $(`#res-${id}`);
 
-    const calculate = () => {
-        const aperture = parseFloat(apertureInput.value);
-        const mag = parseFloat(magInput.value);
-        if (aperture > 0 && mag > 0) {
-            const exitPupil = aperture / mag;
-            resultSpan.textContent = `${exitPupil.toFixed(2)} mm`;
+    form.addEventListener('input', () => {
+        const values = {};
+        let allValid = true;
+        inputNames.forEach(name => {
+            const val = parseFloat(form.elements[name].value);
+            if (isNaN(val)) allValid = false;
+            values[name] = val;
+        });
+
+        if (allValid) {
+            const result = formula(values);
+            resultEl.textContent = result.toFixed(precision);
+        } else {
+            resultEl.textContent = 'N/A';
         }
-    };
-
-    form.addEventListener('input', calculate);
-    calculate();
-}
-
-function setupResolutionCalculator() {
-    const form = document.getElementById('calc-resolution');
-    const apertureInput = document.getElementById('res-aperture');
-    const resultSpan = document.getElementById('res-result');
-
-    const calculate = () => {
-        const aperture = parseFloat(apertureInput.value);
-        if (aperture > 0) {
-            const resolution = 116 / aperture; // Dawes' limit in arcseconds
-            resultSpan.textContent = `${resolution.toFixed(2)}"`;
-        }
-    };
-
-    form.addEventListener('input', calculate);
-    calculate();
-}
-
-function setupMaxUsefulMagnificationCalculator() {
-    const form = document.getElementById('calc-max-mag');
-    const apertureInput = document.getElementById('max-mag-aperture');
-    const resultSpan = document.getElementById('max-mag-result');
-
-    const calculate = () => {
-        const aperture = parseFloat(apertureInput.value);
-        if (aperture > 0) {
-            const maxMag = aperture * 2;
-            resultSpan.textContent = `${maxMag.toFixed(0)}x`;
-        }
-    };
-
-    form.addEventListener('input', calculate);
-    calculate();
+    });
 }
