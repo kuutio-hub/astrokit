@@ -2,6 +2,8 @@
 let animationFrameId = null;
 let lat = 0;
 let lon = 0;
+let pulseSize = 0;
+let pulseDirection = 1;
 
 function toRad(deg) {
     return deg * Math.PI / 180;
@@ -32,30 +34,29 @@ function drawPolarScope(canvas, lst) {
     const textColorStrong = styles.getPropertyValue('--text-color').trim();
 
     const polarisRA = 2.5303; 
-    const polarisDistFraction = 0.8;
+    const polarisDistFraction = 0.7; // Slightly smaller circle for Polaris
 
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, width, height);
 
     // Draw outer ticks
     ctx.strokeStyle = lineLightColor;
-    ctx.lineWidth = 1;
-    // 144 ticks for every 10 minutes (24h * 6 = 144)
+    
     for (let i = 0; i < 144; i++) { 
-        const angle = toRad(i * 2.5 - 90); // 360 / 144 = 2.5 degrees per tick
-        const isHour = i % 6 === 0; // Every 6th tick is an hour
-        const isHalfHour = i % 3 === 0; // Every 3rd tick is a half hour
+        const angle = toRad(i * 2.5 - 90);
+        const isHour = i % 6 === 0;
+        const isHalfHour = i % 3 === 0;
         
         let tickStart;
         if (isHour) {
-            tickStart = radius * 0.92;
-            ctx.lineWidth = 1.5;
+            tickStart = radius * 0.90;
+            ctx.lineWidth = 2;
         } else if (isHalfHour) {
-            tickStart = radius * 0.95;
-            ctx.lineWidth = 1;
+            tickStart = radius * 0.94;
+            ctx.lineWidth = 1.5;
         } else {
-            tickStart = radius * 0.98;
-            ctx.lineWidth = 0.5;
+            tickStart = radius * 0.97;
+            ctx.lineWidth = 0.75;
         }
 
         ctx.beginPath();
@@ -66,23 +67,27 @@ function drawPolarScope(canvas, lst) {
         // Draw hour numbers
         if (isHour) {
             ctx.fillStyle = textColorStrong;
-            ctx.font = '16px sans-serif';
+            ctx.font = 'bold 18px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            const textX = center.x + Math.cos(angle) * (radius - 20);
-            const textY = center.y + Math.sin(angle) * (radius - 20);
-            ctx.fillText(i/6, textX, textY);
+            const textX = center.x + Math.cos(angle) * (radius - 25);
+            const textY = center.y + Math.sin(angle) * (radius - 25);
+            ctx.save();
+            ctx.translate(textX, textY);
+            ctx.rotate(angle + Math.PI / 2); // Rotate numbers to be upright
+            ctx.fillText(i/6, 0, 0);
+            ctx.restore();
         }
     }
 
 
     // Draw crosshairs for NCP
     ctx.beginPath();
-    ctx.moveTo(center.x - 10, center.y);
-    ctx.lineTo(center.x + 10, center.y);
-    ctx.moveTo(center.x, center.y - 10);
-    ctx.lineTo(center.x, center.y + 10);
-    ctx.lineWidth = 1;
+    ctx.moveTo(center.x - 15, center.y);
+    ctx.lineTo(center.x + 15, center.y);
+    ctx.moveTo(center.x, center.y - 15);
+    ctx.lineTo(center.x, center.y + 15);
+    ctx.lineWidth = 1.5;
     ctx.strokeStyle = textColor;
     ctx.stroke();
 
@@ -96,21 +101,34 @@ function drawPolarScope(canvas, lst) {
 
     // Draw Polaris path circle
     ctx.strokeStyle = lineLightColor;
-    ctx.lineWidth = 1;
-    ctx.setLineDash([2, 4]);
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 5]);
     ctx.beginPath();
     ctx.arc(center.x, center.y, radius * polarisDistFraction, 0, 2 * Math.PI);
     ctx.stroke();
     ctx.setLineDash([]);
     
-    // Draw Polaris
+    // Draw Polaris with glow
+    pulseSize += 0.1 * pulseDirection;
+    if (pulseSize > 4 || pulseSize < -1) {
+        pulseDirection *= -1;
+    }
+
+    ctx.save();
     ctx.fillStyle = accentColor;
+    ctx.shadowColor = accentColor;
+    ctx.shadowBlur = 10 + pulseSize;
     ctx.beginPath();
-    ctx.arc(polarisPos.x, polarisPos.y, 6, 0, 2 * Math.PI);
+    ctx.arc(polarisPos.x, polarisPos.y, 7, 0, 2 * Math.PI);
     ctx.fill();
-    ctx.strokeStyle = bgColor;
-    ctx.lineWidth = 1.5;
+    ctx.restore();
+    
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(polarisPos.x, polarisPos.y, 7, 0, 2 * Math.PI);
     ctx.stroke();
+
 
     const infoEl = document.getElementById('polar-align-info');
     if (infoEl) {

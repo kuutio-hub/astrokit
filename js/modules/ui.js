@@ -103,7 +103,7 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
             <div class="accordion-content active" style="max-height: fit-content; padding: 1.5rem;">
                  <div class="moon-phase-container">
                     <div class="moon-phase-visual">
-                        <canvas id="moon-visual-canvas" width="100" height="100"></canvas>
+                        <canvas id="moon-visual-canvas" width="120" height="120" title="Kattints a nagyításhoz!"></canvas>
                     </div>
                     <strong>${moonPhaseName}</strong>
                     <p>${(moonIllumination.fraction * 100).toFixed(1)}% megvilágított</p>
@@ -133,100 +133,127 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
     container.innerHTML = dashboardHTML;
     const canvas = document.getElementById('moon-visual-canvas');
     if (canvas) {
-        updateMoonVisual(canvas, moonIllumination.phase, moonIllumination.angle);
+        updateMoonVisual(canvas, moonIllumination.fraction, moonIllumination.phase);
+        
+        canvas.addEventListener('click', () => {
+            const modal = document.getElementById('app-modal');
+            const modalBody = document.getElementById('modal-body');
+            modalBody.innerHTML = '<h3>Aktuális Holdfázis</h3><canvas id="modal-moon-canvas" width="400" height="400"></canvas>';
+            const modalCanvas = document.getElementById('modal-moon-canvas');
+            updateMoonVisual(modalCanvas, moonIllumination.fraction, moonIllumination.phase);
+            modal.style.display = 'flex';
+        });
     }
     
     updateMoonPosition(lat, lon);
     setInterval(() => updateMoonPosition(lat, lon), 60000);
 }
 
-function drawCraters(ctx, radius, isLit) {
-    const craterCount = 25;
+function drawCraters(ctx, radius, isLitCheck) {
+    ctx.save();
+    ctx.clip(); // Use the provided lit area path for clipping
+    
+    const craterCount = Math.floor(radius / 2); // Scale crater count with size
     for (let i = 0; i < craterCount; i++) {
         const angle = Math.random() * 2 * Math.PI;
-        const dist = Math.random() * radius * 0.9;
+        const dist = Math.random() * radius * 0.95;
         const x = radius + Math.cos(angle) * dist;
         const y = radius + Math.sin(angle) * dist;
 
-        if (isLit(x, y)) {
-            const craterRadius = (Math.random() * 2 + 1) * (1 - dist / radius);
+        if (isLitCheck(x, y)) {
+            const craterRadius = (Math.random() * 0.03 + 0.01) * radius * (1 - dist/radius * 0.5);
             ctx.beginPath();
             ctx.arc(x, y, craterRadius, 0, 2 * Math.PI);
-            ctx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.1 + 0.05})`;
+            ctx.fillStyle = `rgba(0, 0, 0, ${Math.random() * 0.15 + 0.1})`;
             ctx.fill();
 
             // Rim light
             const rimAngle = angle + Math.PI * 1.1;
-            const rimX = x + Math.cos(rimAngle) * 0.2;
-            const rimY = y + Math.sin(rimAngle) * 0.2;
+            const rimX = x + Math.cos(rimAngle) * craterRadius * 0.2;
+            const rimY = y + Math.sin(rimAngle) * craterRadius * 0.2;
             ctx.beginPath();
             ctx.arc(rimX, rimY, craterRadius * 0.9, 0, 2 * Math.PI);
-            ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.08})`;
+            ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.12})`;
             ctx.fill();
         }
     }
+    ctx.restore();
 }
 
-function updateMoonVisual(canvas, phase) {
+
+function updateMoonVisual(canvas, fraction, phase) {
     const ctx = canvas.getContext('2d');
     const { width, height } = canvas;
     const r = width / 2;
 
     ctx.clearRect(0, 0, width, height);
 
-    const litGradient = ctx.createRadialGradient(r*0.6, r*0.6, 0, r, r, r);
-    litGradient.addColorStop(0, '#f8f8f8');
+    // --- Create Gradients ---
+    const litGradient = ctx.createRadialGradient(r * 0.7, r * 0.7, r * 0.1, r, r, r);
+    litGradient.addColorStop(0, '#f9f9f9');
+    litGradient.addColorStop(0.7, '#e0e0e0');
     litGradient.addColorStop(1, '#c0c0c0');
-    
-    const darkGradient = ctx.createRadialGradient(r*1.4, r*1.4, r*1.2, r, r, r);
-    darkGradient.addColorStop(0, '#4a4a4a');
-    darkGradient.addColorStop(1, '#2c2c2c');
 
-    ctx.fillStyle = darkGradient;
+    const darkGradient = ctx.createRadialGradient(r * 1.3, r * 1.3, r, r, r, r*2);
+    darkGradient.addColorStop(0, '#3a3a3a');
+    darkGradient.addColorStop(0.5, '#2c2c2c');
+    darkGradient.addColorStop(1, '#1a1a1a');
+
+    // --- Draw Base Lit Moon ---
+    ctx.fillStyle = litGradient;
     ctx.beginPath();
     ctx.arc(r, r, r, 0, 2 * Math.PI);
     ctx.fill();
-
-    const terminatorXRadius = r * Math.cos(phase * 2 * Math.PI);
-
-    // Save the clipping region for craters
+    
+    // --- Create Lit Area Path for Craters ---
     ctx.save();
     ctx.beginPath();
-    if (phase < 0.5) { // Waxing
-        ctx.arc(r, r, r, -Math.PI/2, Math.PI/2, false);
-        ctx.ellipse(r, r, Math.abs(terminatorXRadius), r, 0, Math.PI/2, -Math.PI/2, true);
-    } else { // Waning
-        ctx.arc(r, r, r, Math.PI/2, -Math.PI/2, false);
-        ctx.ellipse(r, r, Math.abs(terminatorXRadius), r, 0, -Math.PI/2, Math.PI/2, true);
+    ctx.rect(0, 0, width, height); // Dummy path for isPointInPath check
+    const isLitCheck = (x, y) => ctx.isPointInPath(x, y);
+    drawCraters(ctx, r, isLitCheck); // Draw craters on the base lit moon
+    ctx.restore();
+    
+    // --- Draw Terminator Shadow ---
+    const illuminationAngle = (1 - fraction) * Math.PI;
+    const terminatorX = r - Math.cos(illuminationAngle) * r;
+    const terminatorRx = Math.abs(r - terminatorX);
+    
+    ctx.fillStyle = darkGradient;
+    
+    // phase: 0=new, 0.25=1q, 0.5=full, 0.75=3q
+    if (fraction > 0.01 && fraction < 0.99) {
+        ctx.beginPath();
+        if (phase < 0.5) { // Waxing (light on right, shadow on left)
+            ctx.arc(r, r, r, Math.PI / 2, -Math.PI / 2, true); // Left half circle
+            ctx.ellipse(r, r, terminatorRx, r, 0, -Math.PI / 2, Math.PI / 2, false);
+        } else { // Waning (light on left, shadow on right)
+            ctx.arc(r, r, r, -Math.PI / 2, Math.PI / 2, true); // Right half circle
+            ctx.ellipse(r, r, terminatorRx, r, 0, Math.PI / 2, -Math.PI / 2, false);
+        }
+        ctx.fill();
+    } else if (fraction <= 0.01) { // New moon
+        ctx.beginPath();
+        ctx.arc(r, r, r, 0, 2 * Math.PI);
+        ctx.fill();
     }
-    ctx.clip();
-    
-    // Fill clipped area
-    ctx.fillStyle = litGradient;
-    ctx.fillRect(0, 0, width, height);
-    
-    // Draw craters within the clipped (lit) area
-    drawCraters(ctx, r, (x, y) => ctx.isPointInPath(x, y));
+    // No fill for full moon (fraction >= 0.99)
 
-    ctx.restore(); // Remove clipping
-
-    // Soften the terminator edge
+    // --- Add subtle terminator blur ---
+    const blurGradient = ctx.createLinearGradient(terminatorX - 5, 0, terminatorX + 5, 0);
+    if (phase < 0.5) { // Waxing, blur is on the right of the shadow
+         blurGradient.addColorStop(0, 'rgba(0,0,0,0.5)');
+         blurGradient.addColorStop(1, 'rgba(0,0,0,0)');
+    } else { // Waning, blur is on the left of the shadow
+         blurGradient.addColorStop(0, 'rgba(0,0,0,0)');
+         blurGradient.addColorStop(1, 'rgba(0,0,0,0.5)');
+    }
+    
     ctx.save();
     ctx.beginPath();
-    ctx.ellipse(r, r, Math.abs(terminatorXRadius), r, 0, 0, 2 * Math.PI);
-    ctx.clip();
-
-    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-    ctx.shadowBlur = 4;
-    
-    if (phase < 0.5) { // Waxing
-        ctx.shadowOffsetX = 2;
-    } else { // Waning
-        ctx.shadowOffsetX = -2;
-    }
-    
-    ctx.fillStyle = phase < 0.5 ? darkGradient : litGradient;
-    ctx.fillRect(phase < 0.5 ? -width : 0, 0, width, height);
+    ctx.ellipse(r, r, terminatorRx, r, 0, 0, 2*Math.PI);
+    ctx.fillStyle = blurGradient;
+    ctx.globalCompositeOperation = 'source-atop';
+    ctx.fillRect(0,0,width,height);
     ctx.restore();
 }
 

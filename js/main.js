@@ -10,7 +10,7 @@ import { initWiki } from './modules/wiki.js';
 import { initPolarAlign, stopPolarAlignAnimation } from './modules/polar_align.js';
 import { initPlanner } from './modules/planner.js';
 
-const APP_VERSION = 'v0.9.7';
+const APP_VERSION = 'v0.9.8';
 
 document.addEventListener('DOMContentLoaded', async () => {
     displayVersion();
@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupNightMode();
     setupAccordions();
     setupInfoTooltips();
+    setupModal();
     initCalculators();
     initAstrofotoHelper();
     initCalendar();
@@ -185,6 +186,23 @@ function setupInfoTooltips() {
             tooltip.style.opacity = '0';
             tooltip.style.display = 'none';
             currentIcon = null;
+        }
+    });
+}
+
+function setupModal() {
+    const modal = document.getElementById('app-modal');
+    const closeBtn = document.getElementById('modal-close');
+    
+    const closeModal = () => {
+        modal.style.display = 'none';
+        document.getElementById('modal-body').innerHTML = ''; // Clear content
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
         }
     });
 }

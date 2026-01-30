@@ -312,7 +312,12 @@ main {
 }
 
 .moon-phase-visual canvas {
+    cursor: pointer;
     filter: drop-shadow(0 0 5px rgba(245,245,245,0.2));
+    transition: transform 0.2s ease;
+}
+.moon-phase-visual canvas:hover {
+    transform: scale(1.05);
 }
 
 /* Calculators & Astrophoto */
@@ -469,6 +474,39 @@ form input, form select {
 }
 
 /* Analemma & Canvas Styles */
+.analemma-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin: -1.5rem -1.5rem 1rem -1.5rem;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.analemma-header h2 {
+    margin: 0;
+    padding: 0;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.analemma-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary-color);
+}
+.analemma-controls input[type="range"] {
+    width: 120px;
+}
+.analemma-controls span {
+    font-weight: bold;
+    color: var(--text-color);
+    width: 45px;
+}
+
 .canvas-container {
     position: relative;
     width: 100%;
@@ -631,6 +669,22 @@ form input, form select {
 .visibility-ok { background-color: var(--visibility-ok); }
 .visibility-bad { background-color: var(--visibility-bad); }
 
+.details-button {
+    background: none;
+    border: none;
+    color: var(--text-secondary-color);
+    cursor: pointer;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+.details-button:hover {
+    color: var(--accent-color);
+}
+
 /* Toggle Switch */
 .toggle-switch{position:relative;display:inline-flex;width:50px;height:26px;align-items:center;color:var(--text-secondary-color);gap:0.5rem;white-space:nowrap;}
 .toggle-switch input{opacity:0;width:0;height:0}
@@ -736,6 +790,70 @@ input:checked+.slider:before{transform:translateX(24px)}
     border-radius: 8px;
     text-align: center;
 }
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(13, 17, 23, 0.85);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+}
+.modal-content {
+    background-color: var(--primary-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px var(--shadow-color);
+    animation: fadeIn 0.3s ease-in-out;
+}
+.modal-close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: var(--text-secondary-color);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.modal-close-btn:hover {
+    color: var(--text-color);
+}
+#modal-body h3 {
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+}
+#modal-body .data-list {
+    max-width: 500px;
+}
+#modal-body canvas {
+    display: block;
+    margin: 0 auto;
+}
+
+/* Polaris Glow Effect */
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 var(--accent-color); }
+    70% { box-shadow: 0 0 8px 12px rgba(88, 166, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(88, 166, 255, 0); }
+}
+.polaris-glow {
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
 
 footer {
     text-align: center;

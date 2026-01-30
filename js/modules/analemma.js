@@ -1,94 +1,56 @@
 
-const DB_NAME = 'AstroAppDB';
-const DB_VERSION = 1;
-const STORE_NAME = 'analemmaStore';
-let db;
 let animationFrameId = null;
 
-function openDB() {
-    return new Promise((resolve, reject) => {
-        if (db) return resolve(db);
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-        request.onerror = (event) => reject('IndexedDB hiba: ' + event.target.errorCode);
-        request.onsuccess = (event) => {
-            db = event.target.result;
-            resolve(db);
-        };
-        request.onupgradeneeded = (event) => {
-            const db = event.target.result;
-            db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-        };
-    });
-}
-
-async function getAnalemmaData(id) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction(STORE_NAME, 'readonly');
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.get(id);
-        request.onsuccess = () => resolve(request.result ? request.result.data : null);
-        request.onerror = (event) => reject('Adatbázis olvasási hiba: ' + event.target.errorCode);
-    });
-}
-
-async function saveAnalemmaData(id, data) {
-    const db = await openDB();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction(STORE_NAME, 'readwrite');
-        const store = transaction.objectStore(STORE_NAME);
-        const request = store.put({ id, data });
-        request.onsuccess = () => resolve();
-        request.onerror = (event) => reject('Adatbázis írási hiba: ' + event.target.errorCode);
-    });
-}
-
-export async function initAnalemma(lat, lon) {
+export function initAnalemma(lat, lon) {
     const canvas = document.getElementById('analemma-canvas');
+    const timeSlider = document.getElementById('analemma-time');
+    const timeDisplay = document.getElementById('analemma-time-display');
     const loader = document.getElementById('analemma-loader');
-    if (!canvas) return;
+
+    if (!canvas || !timeSlider) return;
 
     if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
     }
 
-    loader.style.display = 'flex';
-    const year = new Date().getFullYear();
-    const id = `analemma-${year}-${lat.toFixed(2)}-${lon.toFixed(2)}`;
-    try {
-        let sunPositions = await getAnalemmaData(id);
-        if (!sunPositions) {
-            sunPositions = await new Promise(resolve => {
-                setTimeout(() => resolve(calculateAnalemma(lat, lon)), 50);
-            });
-            await saveAnalemmaData(id, sunPositions);
-        }
+    const redraw = async () => {
+        loader.style.display = 'flex';
+        const hour = parseFloat(timeSlider.value);
+        const minutes = (hour % 1) * 60;
+        timeDisplay.textContent = `${String(Math.floor(hour)).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
         
-        const solarNoonToday = SunCalc.getTimes(new Date(), lat, lon).solarNoon;
-        const localTimeSpan = document.getElementById('analemma-local-time');
-        if (localTimeSpan) {
-             localTimeSpan.textContent = solarNoonToday.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
-        }
+        // Use a short timeout to allow the UI to update (show loader) before the calculation
+        await new Promise(resolve => setTimeout(resolve, 20));
 
-        drawAnalemma(canvas, sunPositions);
-    } catch (error) {
-        console.error("Analemma hiba:", error);
-    } finally {
+        const sunPositions = calculateAnalemma(lat, lon, hour);
+        drawAnalemma(canvas, sunPositions, hour);
         loader.style.display = 'none';
-    }
+    };
+
+    timeSlider.addEventListener('input', () => {
+        const hour = parseFloat(timeSlider.value);
+        const minutes = (hour % 1) * 60;
+        timeDisplay.textContent = `${String(Math.floor(hour)).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    });
+    timeSlider.addEventListener('change', redraw);
+
+    // Initial draw
+    redraw();
 }
 
-function calculateAnalemma(lat, lon) {
+function calculateAnalemma(lat, lon, hour) {
     const positions = [];
     const year = new Date().getFullYear();
+    const localHour = hour - new Date().getTimezoneOffset() / 60;
+
     for (let i = 0; i < 365; i++) {
-        const date = new Date(year, 0, i + 1, 12);
-        const solarNoon = SunCalc.getTimes(date, lat, lon).solarNoon;
-        const pos = SunCalc.getPosition(solarNoon, lat, lon);
+        const date = new Date(Date.UTC(year, 0, i + 1, localHour));
+        const pos = SunCalc.getPosition(date, lat, lon);
         positions.push({
-            date: solarNoon,
+            date: date,
             altitude: pos.altitude * 180 / Math.PI,
-            azimuth: pos.azimuth * 180 / Math.PI 
+            azimuth: pos.azimuth * 180 / Math.PI
         });
     }
     return positions;
@@ -104,31 +66,42 @@ function drawAnalemma(canvas, sunPositions) {
     const plotWidth = width - 2 * padding;
     const plotHeight = height - 2 * padding;
 
-    const minAlt = Math.min(...sunPositions.map(p => p.altitude));
-    const maxAlt = Math.max(...sunPositions.map(p => p.altitude));
+    // Filter out positions below the horizon
+    const visiblePositions = sunPositions.filter(p => p.altitude > 0);
+    if (visiblePositions.length < 2) {
+        ctx.fillStyle = styles.getPropertyValue('--bg-color').trim();
+        ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = styles.getPropertyValue('--text-secondary-color').trim();
+        ctx.textAlign = 'center';
+        ctx.font = "16px sans-serif";
+        ctx.fillText("A Nap ebben az időpontban egész évben a horizont alatt van.", width / 2, height / 2);
+        return;
+    }
+
+    const minAlt = Math.min(...visiblePositions.map(p => p.altitude));
+    const maxAlt = Math.max(...visiblePositions.map(p => p.altitude));
     const altRange = maxAlt - minAlt;
 
-    const azValues = sunPositions.map(p => p.azimuth);
+    const azValues = visiblePositions.map(p => p.azimuth);
     const minAz = Math.min(...azValues);
     const maxAz = Math.max(...azValues);
     const azRange = maxAz - minAz;
 
     const horizontalExaggeration = 4;
     
-    const scaleY = plotHeight / altRange;
-    const scaleX = plotWidth / (azRange * horizontalExaggeration);
-
-
-    const specialPoints = [
-        { day: 0, label: 'Téli napforduló', color: '#58a6ff' },
-        { day: 80, label: 'Tavaszi napéjegyenlőség', color: '#f5f5f5' }, 
-        { day: 172, label: 'Nyári napforduló', color: '#ffeb3b' },
-        { day: 265, label: 'Őszi napéjegyenlőség', color: '#f5f5f5' }
-    ].map(p => ({ ...p, pos: sunPositions[p.day] }));
+    const scaleY = altRange > 0 ? plotHeight / altRange : 1;
+    const scaleX = azRange > 0 ? plotWidth / (azRange * horizontalExaggeration) : 1;
 
     const getDayOfYear = date => (Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) - Date.UTC(date.getFullYear(), 0, 0)) / 24 / 60 / 60 / 1000;
-    const todayIndex = getDayOfYear(new Date()) - 1;
-    const todayPos = sunPositions[todayIndex];
+    
+    const specialPointsData = [
+        { day: 80, label: 'Tavaszi napéjegyenlőség', color: '#f5f5f5' }, 
+        { day: 172, label: 'Nyári napforduló', color: '#ffeb3b' },
+        { day: 265, label: 'Őszi napéjegyenlőség', color: '#f5f5f5' },
+        { day: 355, label: 'Téli napforduló', color: '#58a6ff' }
+    ];
+
+    const todayIndex = getDayOfYear(new Date()) -1;
 
     const getCanvasCoords = (pos) => {
         const x = padding + ((pos.azimuth - minAz) * scaleX * horizontalExaggeration);
@@ -136,81 +109,63 @@ function drawAnalemma(canvas, sunPositions) {
         return { x, y };
     };
 
-    let pulseSize = 0;
-    let pulseDirection = 1;
-
-    const animate = () => {
-        pulseSize += 0.15 * pulseDirection;
-        if (pulseSize > 4 || pulseSize < 0) {
-            pulseDirection *= -1;
-        }
-        
-        ctx.fillStyle = styles.getPropertyValue('--bg-color').trim();
-        ctx.fillRect(0, 0, width, height);
-        ctx.textAlign = 'center';
-        ctx.fillStyle = styles.getPropertyValue('--text-color').trim();
-        ctx.font = "12px sans-serif";
-        ctx.fillText("Dél", padding + plotWidth/2, height - padding + 25);
-        ctx.save();
-        ctx.translate(padding - 35, height/2);
-        ctx.rotate(-Math.PI/2);
-        ctx.fillText("Magasság", 0, 0);
-        ctx.restore();
-
-        // Draw the analemma path as a continuous line
+    ctx.fillStyle = styles.getPropertyValue('--bg-color').trim();
+    ctx.fillRect(0, 0, width, height);
+    
+    // Draw grid lines and labels
+    ctx.strokeStyle = styles.getPropertyValue('--border-color').trim();
+    ctx.lineWidth = 1;
+    ctx.font = "12px sans-serif";
+    ctx.textAlign = 'center';
+    ctx.fillStyle = styles.getPropertyValue('--text-secondary-color').trim();
+    
+    // Horizontal lines (altitude)
+    for(let i=0; i <= 5; i++) {
+        const alt = minAlt + (altRange / 5) * i;
+        const y = height - padding - (plotHeight / 5) * i;
         ctx.beginPath();
-        const firstPoint = getCanvasCoords(sunPositions[0]);
-        ctx.moveTo(firstPoint.x, firstPoint.y);
-        for(let i = 1; i < sunPositions.length; i++) {
-            const point = getCanvasCoords(sunPositions[i]);
-            ctx.lineTo(point.x, point.y);
-        }
-        ctx.strokeStyle = styles.getPropertyValue('--text-secondary-color').trim();
-        ctx.lineWidth = 1.5;
+        ctx.moveTo(padding, y);
+        ctx.lineTo(width - padding, y);
         ctx.stroke();
+        ctx.fillText(`${alt.toFixed(0)}°`, padding - 20, y);
+    }
 
+    // Draw the analemma path
+    ctx.beginPath();
+    const firstPoint = getCanvasCoords(visiblePositions[0]);
+    ctx.moveTo(firstPoint.x, firstPoint.y);
+    for(let i = 1; i < visiblePositions.length; i++) {
+        const point = getCanvasCoords(visiblePositions[i]);
+        ctx.lineTo(point.x, point.y);
+    }
+    ctx.strokeStyle = styles.getPropertyValue('--text-secondary-color').trim();
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
 
-        // Draw special points on top
-        specialPoints.forEach(p => {
-            const { x, y } = getCanvasCoords(p.pos);
+    // Draw special points
+    specialPointsData.forEach(p => {
+        const pos = sunPositions[p.day];
+        if (pos.altitude > 0) {
+            const { x, y } = getCanvasCoords(pos);
             ctx.beginPath();
             ctx.fillStyle = p.color;
             ctx.arc(x, y, 5, 0, 2 * Math.PI);
             ctx.fill();
             ctx.strokeStyle = '#000';
             ctx.stroke();
-        });
-
-        // Draw today's position
-        if(todayPos) {
-            const { x, y } = getCanvasCoords(todayPos);
-            ctx.beginPath();
-            ctx.fillStyle = 'rgba(255, 107, 92, 0.8)';
-            ctx.arc(x, y, 5 + pulseSize, 0, 2 * Math.PI);
-            ctx.fill();
         }
-        animationFrameId = requestAnimationFrame(animate);
+    });
+
+    // Draw today's position
+    const todayPos = sunPositions[todayIndex];
+    if (todayPos && todayPos.altitude > 0) {
+        const { x, y } = getCanvasCoords(todayPos);
+        ctx.beginPath();
+        ctx.fillStyle = '#ff6b5c';
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.arc(x, y, 6, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.stroke();
     }
-    animate();
-
-    canvas.onmousemove = (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-        let found = false;
-        specialPoints.forEach(p => {
-            const { x, y } = getCanvasCoords(p.pos);
-            const dist = Math.sqrt((mouseX - x) ** 2 + (mouseY - y) ** 2);
-            if (dist < 8) {
-                tooltip.style.left = `${e.clientX + 10}px`;
-                tooltip.style.top = `${e.clientY}px`;
-                tooltip.innerHTML = `${p.label}<br>${new Date(p.pos.date).toLocaleDateString('hu-HU')}`;
-                tooltip.style.opacity = '1';
-                found = true;
-            }
-        });
-        if (!found) {
-            tooltip.style.opacity = '0';
-        }
-    };
 }
