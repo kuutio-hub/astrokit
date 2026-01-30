@@ -3,6 +3,7 @@ const DB_NAME = 'AstroAppDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'analemmaStore';
 let db;
+let animationFrameId = null;
 
 function openDB() {
     return new Promise((resolve, reject) => {
@@ -46,6 +47,11 @@ export async function initAnalemma(lat, lon) {
     const canvas = document.getElementById('analemma-canvas');
     const loader = document.getElementById('analemma-loader');
     if (!canvas) return;
+
+    if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+    }
+
     loader.style.display = 'flex';
     const year = new Date().getFullYear();
     const id = `analemma-${year}-${lat.toFixed(2)}-${lon.toFixed(2)}`;
@@ -68,11 +74,9 @@ export async function initAnalemma(lat, lon) {
 function calculateAnalemma(lat, lon) {
     const positions = [];
     const year = new Date().getFullYear();
-    const startDate = new Date(Date.UTC(year, 0, 1, 12));
     for (let i = 0; i < 365; i++) {
-        const date = new Date(startDate);
-        date.setUTCDate(startDate.getUTCDate() + i);
-        const solarNoon = SunCalc.getTimes(date, lat, lon, 0).solarNoon;
+        const date = new Date(year, 0, i + 1, 12);
+        const solarNoon = SunCalc.getTimes(date, lat, lon).solarNoon;
         const pos = SunCalc.getPosition(solarNoon, lat, lon);
         positions.push({
             date: solarNoon,
@@ -97,38 +101,40 @@ function drawAnalemma(canvas, sunPositions) {
     const maxAlt = Math.max(...sunPositions.map(p => p.altitude));
     const altRange = maxAlt - minAlt;
 
-    // Azimuth is measured from South (0). Find max deviation.
     const azValues = sunPositions.map(p => p.azimuth);
     const maxAbsAz = Math.max(...azValues.map(az => Math.abs(az - 180)));
     const azRange = maxAbsAz * 2;
     
-    // Maintain aspect ratio: determine scale based on larger range
-    const degPerPixelX = azRange / plotWidth;
-    const degPerPixelY = altRange / plotHeight;
-    const degPerPixel = Math.max(degPerPixelX, degPerPixelY);
-
-    const scaledPlotWidth = azRange / degPerPixel;
-    const scaledPlotHeight = altRange / degPerPixel;
-
+    const degPerPixel = Math.max(azRange / plotWidth, altRange / plotHeight);
 
     const specialPoints = [
-        { day: 0, label: 'Téli napforduló', color: '#58a6ff' }, // Winter Solstice
-        { day: 80, label: 'Tavaszi napéjegyenlőség', color: '#f5f5f5' }, // Vernal Equinox
-        { day: 172, label: 'Nyári napforduló', color: '#ffeb3b' }, // Summer Solstice
-        { day: 265, label: 'Őszi napéjegyenlőség', color: '#f5f5f5' } // Autumnal Equinox
+        { day: 0, label: 'Téli napforduló', color: '#58a6ff' },
+        { day: 80, label: 'Tavaszi napéjegyenlőség', color: '#f5f5f5' }, 
+        { day: 172, label: 'Nyári napforduló', color: '#ffeb3b' },
+        { day: 265, label: 'Őszi napéjegyenlőség', color: '#f5f5f5' }
     ].map(p => ({ ...p, pos: sunPositions[p.day] }));
 
+    const getDayOfYear = date => (Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) - Date.UTC(date.getFullYear(), 0, 0)) / 24 / 60 / 60 / 1000;
+    const todayIndex = getDayOfYear(new Date()) - 1;
+    const todayPos = sunPositions[todayIndex];
+
     const getCanvasCoords = (pos) => {
-        // Center of plot area
         const centerX = padding + plotWidth / 2;
         const centerY = padding + plotHeight / 2;
-        // Map degrees to pixels
         const x = centerX + ((pos.azimuth - 180) / degPerPixel);
         const y = centerY - ((pos.altitude - (minAlt + altRange / 2)) / degPerPixel);
         return { x, y };
     };
 
-    const redraw = () => {
+    let pulseSize = 0;
+    let pulseDirection = 1;
+
+    const animate = () => {
+        pulseSize += 0.15 * pulseDirection;
+        if (pulseSize > 4 || pulseSize < 0) {
+            pulseDirection *= -1;
+        }
+        
         ctx.fillStyle = styles.getPropertyValue('--bg-color').trim();
         ctx.fillRect(0, 0, width, height);
         ctx.strokeStyle = styles.getPropertyValue('--border-color').trim();
@@ -157,7 +163,17 @@ function drawAnalemma(canvas, sunPositions) {
             ctx.strokeStyle = '#000';
             ctx.stroke();
         });
-    };
+
+        if(todayPos) {
+            const { x, y } = getCanvasCoords(todayPos);
+            ctx.beginPath();
+            ctx.fillStyle = 'rgba(255, 107, 92, 0.8)';
+            ctx.arc(x, y, 5 + pulseSize, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+        animationFrameId = requestAnimationFrame(animate);
+    }
+    animate();
 
     canvas.onmousemove = (e) => {
         const rect = canvas.getBoundingClientRect();
@@ -170,7 +186,7 @@ function drawAnalemma(canvas, sunPositions) {
             if (dist < 8) {
                 tooltip.style.left = `${e.clientX + 10}px`;
                 tooltip.style.top = `${e.clientY}px`;
-                tooltip.innerHTML = `${p.label}<br>${p.pos.date.toLocaleDateString('hu-HU')}`;
+                tooltip.innerHTML = `${p.label}<br>${new Date(p.pos.date).toLocaleDateString('hu-HU')}`;
                 tooltip.style.opacity = '1';
                 found = true;
             }
@@ -179,5 +195,4 @@ function drawAnalemma(canvas, sunPositions) {
             tooltip.style.opacity = '0';
         }
     };
-    redraw();
 }

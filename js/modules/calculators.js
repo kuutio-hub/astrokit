@@ -11,7 +11,6 @@ export function initCalculators() {
     populateCameraSelect();
     loadGearSettings();
     setupMainGearForm();
-    setupFormulaTooltips();
     updateAllCalculations();
 }
 
@@ -65,25 +64,6 @@ function setupMainGearForm() {
     });
 }
 
-// --- UI and Tooltips ---
-function setupFormulaTooltips() {
-    const tooltip = $('#formula-tooltip');
-    document.body.addEventListener('click', e => {
-        if (e.target.classList.contains('info-icon')) {
-            e.stopPropagation();
-            const formula = e.target.dataset.formula;
-            tooltip.textContent = formula;
-            const rect = e.target.getBoundingClientRect();
-            tooltip.style.left = `${rect.left + window.scrollX}px`;
-            tooltip.style.top = `${rect.bottom + window.scrollY + 5}px`;
-            tooltip.style.display = 'block';
-            tooltip.style.opacity = '1';
-        } else {
-            tooltip.style.display = 'none';
-            tooltip.style.opacity = '0';
-        }
-    });
-}
 
 // --- Calculation Logic ---
 function updateAllCalculations() {
@@ -93,7 +73,7 @@ function updateAllCalculations() {
 
     const magnification = eyeFocalLength > 0 ? teleFocalLength / eyeFocalLength : 0;
     const focalRatio = teleAperture > 0 ? teleFocalLength / teleAperture : 0;
-    const exitPupil = magnification > 0 ? (teleAperture / magnification).toFixed(2) : 0;
+    const exitPupil = magnification > 0 ? (teleAperture / magnification) : 0;
 
     let exitPupilRec = { text: '', class: '' };
     if (exitPupil > 6.5) {
@@ -109,27 +89,27 @@ function updateAllCalculations() {
 
     const results = {
         optics: [
-            { title: "Nagyítás", value: `${magnification.toFixed(1)}x`, inputs: `TFL: ${teleFocalLength}mm / EFL: ${eyeFocalLength}mm`, formula: "Távcső Fókusz / Okulár Fókusz",
+            { title: "Nagyítás", value: `${magnification.toFixed(1)}x`, inputs: `TFL: ${teleFocalLength}mm / EFL: ${eyeFocalLength}mm`,
               description: "Megmutatja, hányszor nagyobbnak látjuk az objektumot a távcsővel, mint szabad szemmel." },
-            { title: "Kilépő Pupilla", value: `${exitPupil} mm`, inputs: `Átmérő: ${teleAperture}mm / Nagyítás: ${magnification.toFixed(1)}x`, formula: "Távcső Átmérő / Nagyítás",
+            { title: "Kilépő Pupilla", value: `${exitPupil.toFixed(2)} mm`, inputs: `Átmérő: ${teleAperture}mm / Nagyítás: ${magnification.toFixed(1)}x`,
               description: "A távcsőből kilépő fénynyaláb átmérője. Ideális, ha ez az érték közel esik a sötéthez szokott szemünk pupillájának méretéhez (kb. 5-7mm).", recommendation: exitPupilRec },
-            { title: "Valós Látómező", value: `${magnification > 0 ? (eyeAFOV / magnification).toFixed(2) : 0}°`, inputs: `Okulár LM: ${eyeAFOV}° / Nagyítás: ${magnification.toFixed(1)}x`, formula: "Okulár Látszólagos LM / Nagyítás",
+            { title: "Valós Látómező", value: `${magnification > 0 ? (eyeAFOV / magnification).toFixed(2) : 0}°`, inputs: `Okulár LM: ${eyeAFOV}° / Nagyítás: ${magnification.toFixed(1)}x`,
               description: "Az égboltnak az a valós darabja (fokokban), amit az okulárba nézve egyszerre látunk." },
-            { title: "F-arány (Fényerő)", value: `f/${focalRatio.toFixed(1)}`, inputs: `TFL: ${teleFocalLength}mm / Átmérő: ${teleAperture}mm`, formula: "Fókusztávolság / Átmérő",
+            { title: "F-arány (Fényerő)", value: `f/${focalRatio.toFixed(1)}`, inputs: `TFL: ${teleFocalLength}mm / Átmérő: ${teleAperture}mm`,
               description: "A távcső 'sebessége'. Kisebb érték (pl. f/5) 'gyorsabb' távcsövet jelent, ami rövidebb expozíciós időt igényel fotózásnál, és nagyobb látómezőt ad vizuálisan." }
         ],
         resolution: [
-            { title: "Minimális nagyítás", value: `${teleAperture > 0 ? (teleAperture / 7).toFixed(0) : 0}x`, inputs: `Átmérő: ${teleAperture}mm`, formula: "Távcső Átmérő (mm) / 7",
+            { title: "Minimális nagyítás", value: `${teleAperture > 0 ? (teleAperture / 7).toFixed(0) : 0}x`, inputs: `Átmérő: ${teleAperture}mm`,
               description: "Az a legkisebb nagyítás, ahol a távcső teljes átmérőjét kihasználjuk anélkül, hogy a kilépő pupilla nagyobb lenne a szem pupillájánál. Ideális nagy kiterjedésű objektumokhoz." },
-            { title: "Gyakorlati max. nagyítás", value: `${teleAperture > 0 ? Math.min(350, teleAperture * 2).toFixed(0) : 0}x`, inputs: `Átmérő: ${teleAperture}mm`, formula: "2 × Átmérő (mm) [Max ~350x]",
+            { title: "Gyakorlati max. nagyítás", value: `${teleAperture > 0 ? Math.min(350, teleAperture * 2).toFixed(0) : 0}x`, inputs: `Átmérő: ${teleAperture}mm`,
               description: "Az a nagyítás, ami felett a kép már nem lesz élesebb, csak homályosabb a légköri viszonyok és az optika korlátai miatt." },
-            { title: "Dawes-határ", value: `${teleAperture > 0 ? (116 / teleAperture).toFixed(2) : 0}"`, inputs: `Átmérő: ${teleAperture}mm`, formula: "116 / Távcső Átmérő (mm)",
+            { title: "Dawes-határ", value: `${teleAperture > 0 ? (116 / teleAperture).toFixed(2) : 0}"`, inputs: `Átmérő: ${teleAperture}mm`,
               description: "A távcső elméleti felbontóképessége ívmásodpercben, vagyis az a legkisebb távolság, amire két közeli csillagnak lennie kell, hogy különállónak lássuk őket." },
-            { title: "Határmagnitúdó", value: `${teleAperture > 0 ? (7.7 + (5 * Math.log10(teleAperture / 10))).toFixed(2) : 0}m`, inputs: `Átmérő: ${teleAperture}mm`, formula: "7.7 + (5 × Log10(Átmérő cm))",
+            { title: "Határmagnitúdó", value: `${teleAperture > 0 ? (7.7 + (5 * Math.log10(teleAperture / 10))).toFixed(2) : 0}m`, inputs: `Átmérő: ${teleAperture}mm`,
               description: "A leghalványabb csillagok fényessége (magnitúdóban), amit ideális körülmények között még éppen megpillanthatunk a távcsővel." }
         ],
         ccd: [
-             { title: "Kamera felbontása", value: `${teleFocalLength > 0 ? ((pixelSize / teleFocalLength) * 206.265).toFixed(2) : 0} "/px`, inputs: `Pixel: ${pixelSize}μm / TFL: ${teleFocalLength}mm`, formula: "(Képpontméret / Fókusz) × 206.265",
+             { title: "Kamera felbontása", value: `${teleFocalLength > 0 ? ((pixelSize / teleFocalLength) * 206.265).toFixed(2) : 0} "/px`, inputs: `Pixel: ${pixelSize}μm / TFL: ${teleFocalLength}mm`,
                description: "Megmutatja, hogy az égbolt mekkora darabja esik a kamera egyetlen pixelére. Ez határozza meg a fotó részletességét." }
         ]
     };
@@ -148,12 +128,11 @@ function renderResults(containerId, resultsArray) {
         <li>
             <div class="result-title">
                 ${r.title}
-                <i class="ph-info-fill info-icon" data-formula="${r.formula}"></i>
+                <i class="ph-info-fill info-icon" data-description="${r.description}"></i>
             </div>
             <span class="result-value">${r.value}</span>
             <span class="result-inputs">${r.inputs}</span>
             ${r.recommendation && r.recommendation.text ? `<div class="result-recommendation ${r.recommendation.class}">${r.recommendation.text}</div>` : ''}
-            ${r.description ? `<p class="result-desc">${r.description}</p>` : ''}
         </li>
     `).join('');
 }

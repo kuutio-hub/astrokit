@@ -60,6 +60,10 @@ body.night-mode {
     padding: 0;
 }
 
+html {
+    scroll-padding-top: 150px; /* Header + Sticky calc height */
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     background-color: var(--bg-color);
@@ -79,19 +83,20 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.5rem 1rem;
+    padding: 0.75rem 1rem;
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 1.5rem;
-}
-
-header .title-container {
-    text-align: left;
+    position: sticky;
+    top: 0;
+    background-color: var(--bg-color);
+    z-index: 99;
+    transition: padding 0.2s ease;
 }
 
 header h1 {
-    font-size: 2rem;
+    font-size: 1.5rem;
     color: var(--text-color);
-    margin-bottom: 0.25rem;
+    margin: 0;
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -100,7 +105,12 @@ header h1 {
 header p {
     color: var(--text-secondary-color);
     font-size: 1rem;
+    display: none; /* Hide by default, show on larger screens */
 }
+@media (min-width: 768px) {
+    header p { display: block; }
+}
+
 
 .controls {
     display: flex;
@@ -112,14 +122,14 @@ header p {
     background: none;
     border: 2px solid var(--border-color);
     color: var(--text-secondary-color);
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     transition: all 0.2s ease;
 }
 
@@ -247,50 +257,28 @@ main {
 }
 
 .moon-phase-visual {
-    --moon-phase-waxing-angle: -180deg;
-    --moon-phase-waning-angle: -180deg;
-
     width: 100px;
     height: 100px;
-    border-radius: 50%;
     margin: 1rem auto;
     position: relative;
-    background-color: var(--moon-color);
-    background-image: radial-gradient(circle at 20% 30%, rgba(255,255,255,0.1) 5%, transparent 5.5%),
-                      radial-gradient(circle at 70% 60%, rgba(0,0,0,0.1) 8%, transparent 8.5%),
-                      radial-gradient(circle at 50% 85%, rgba(0,0,0,0.08) 4%, transparent 4.5%);
-    overflow: hidden;
-    box-shadow: inset 7px -7px 15px rgba(0,0,0,0.3), 0 0 10px rgba(245,245,245,0.1);
 }
-body.night-mode .moon-phase-visual {
-    background-image: none;
-    box-shadow: none;
-    border: 1px solid var(--moon-color);
-}
-.moon-phase-visual::before,
-.moon-phase-visual::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -50%;
+
+.moon-phase-visual svg {
     width: 100%;
     height: 100%;
-    background-color: var(--bg-color);
-    transform-origin: 100% 50%;
+    filter: drop-shadow(0 0 5px rgba(245,245,245,0.2));
 }
-
-.moon-phase-visual::before {
-    transform: rotate(var(--moon-phase-waxing-angle));
-    transition: transform 0.4s ease-out;
-}
-.moon-phase-visual::after {
-    background-color: var(--moon-color); 
-    transform: rotate(var(--moon-phase-waning-angle));
-    transition: transform 0.4s ease-out;
-}
-
 
 /* Calculators & Astrophoto */
+#calculators .sticky-container {
+    position: sticky;
+    top: 73px; /* Header height + some margin */
+    background: var(--bg-color);
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    z-index: 98;
+}
+
 .form-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -322,6 +310,7 @@ body.night-mode .moon-phase-visual {
 }
 .data-list-results .result-title {
     font-weight: bold; color: var(--text-color); width: 100%; display: flex; justify-content: space-between;
+    align-items: center;
 }
 .data-list-results .result-value {
     font-size: 1.2rem; font-weight: bold; color: var(--accent-color);
@@ -330,11 +319,7 @@ body.night-mode .moon-phase-visual {
     font-size: 0.8rem; color: var(--text-secondary-color);
 }
 .data-list-results .result-desc {
-    font-size: 0.85rem;
-    color: var(--text-secondary-color);
-    margin-top: 4px;
-    font-style: italic;
-    line-height: 1.4;
+    display: none;
 }
 .data-list-results .result-recommendation {
     font-size: 0.8rem;
@@ -383,17 +368,6 @@ body.night-mode .moon-phase-visual {
     color: var(--text-secondary-color);
 }
 
-.fov-canvas-container {
-    margin-top: 1rem;
-}
-
-#fov-info {
-    font-size: 0.85rem;
-    color: var(--text-secondary-color);
-    text-align: center;
-    margin-top: 0.5rem;
-}
-
 form label {
     display: block;
     margin-bottom: 1rem;
@@ -430,8 +404,8 @@ form .result span {
     color: var(--accent-color);
 }
 
-.formula-tooltip {
-    position: absolute;
+.info-tooltip {
+    position: fixed;
     background-color: var(--secondary-color);
     border: 1px solid var(--border-color);
     border-radius: 6px;
@@ -443,6 +417,7 @@ form .result span {
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.2s;
+    line-height: 1.5;
 }
 
 /* Analemma & FOV Canvas */
@@ -639,6 +614,9 @@ footer {
 }
 
 @media (max-width: 768px) {
+    html {
+        scroll-padding-top: 120px;
+    }
     .desktop-only {
         display: none;
     }
@@ -647,11 +625,13 @@ footer {
     }
 
     header {
-        padding: 1rem;
-        margin-bottom: 1rem;
+        padding: 0.5rem 1rem;
+    }
+     #calculators .sticky-container {
+        top: 61px;
     }
     header h1 {
-        font-size: 1.5rem;
+        font-size: 1.2rem;
     }
     
     nav {

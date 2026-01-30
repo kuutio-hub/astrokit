@@ -1,4 +1,6 @@
 
+import { moonPhaseSVGs } from '../data/moon_phases.js';
+
 function formatTime(date) {
     if (!date || isNaN(date)) return 'N/A';
     return date.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
@@ -140,19 +142,9 @@ function updateMoonVisual(phase) {
     const visual = document.getElementById('moon-visual');
     if (!visual) return;
 
-    let waxingAngle, waningAngle;
-
-    // phase: 0=new, 0.25=1st Q, 0.5=full, 0.75=3rd Q
-    if (phase <= 0.5) { // Waxing (növekvő), new to full
-        waxingAngle = -180 + (phase / 0.5) * 180;
-        waningAngle = -180; // Waning side is fully hidden
-    } else { // Waning (fogyó), full to new
-        waxingAngle = 0; // Waxing side is fully revealed
-        waningAngle = -180 + ((phase - 0.5) / 0.5) * 180;
-    }
-
-    visual.style.setProperty('--moon-phase-waxing-angle', `${waxingAngle}deg`);
-    visual.style.setProperty('--moon-phase-waning-angle', `${waningAngle}deg`);
+    // phase: 0=new, 0.25=1st Q, 0.5=full, 0.75=3rd Q. Synodic month is ~29.53 days, we use 28 images.
+    const phaseIndex = Math.min(27, Math.floor(phase * 28));
+    visual.innerHTML = moonPhaseSVGs[phaseIndex] || moonPhaseSVGs[0];
 }
 
 function updateMoonPosition(lat, lon) {
