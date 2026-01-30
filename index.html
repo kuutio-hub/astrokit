@@ -18,6 +18,7 @@
             </div>
             <nav id="main-nav" class="desktop-nav">
                 <button class="nav-item active" data-target="dashboard" title="Műszerfal"><i class="ph-gauge"></i></button>
+                <button class="nav-item" data-target="planner" title="Észlelés Tervező"><i class="ph-eye"></i></button>
                 <button class="nav-item" data-target="calculators" title="Kalkulátorok"><i class="ph-calculator"></i></button>
                 <button class="nav-item" data-target="polar-align" title="Pólusra Állás"><i class="ph-navigation-arrow"></i></button>
                 <button class="nav-item" data-target="astrophoto" title="Asztrofotó"><i class="ph-camera"></i></button>
@@ -37,6 +38,7 @@
         
         <div id="mobile-menu" class="mobile-menu-overlay">
             <a href="#dashboard" class="mobile-nav-item" data-target="dashboard"><i class="ph-gauge"></i> Műszerfal</a>
+            <a href="#planner" class="mobile-nav-item" data-target="planner"><i class="ph-eye"></i> Észlelés Tervező</a>
             <a href="#calculators" class="mobile-nav-item" data-target="calculators"><i class="ph-calculator"></i> Kalkulátorok</a>
             <a href="#polar-align" class="mobile-nav-item" data-target="polar-align"><i class="ph-navigation-arrow"></i> Pólusra Állás</a>
             <a href="#astrophoto" class="mobile-nav-item" data-target="astrophoto"><i class="ph-camera"></i> Asztrofotó</a>
@@ -57,6 +59,42 @@
             <section id="dashboard" class="content-section active">
                 <div id="dashboard-container" class="dashboard-container">
                     <!-- Dashboard accordions will be injected by JS -->
+                </div>
+            </section>
+            
+            <section id="planner" class="content-section">
+                <h2><i class="ph-eye"></i> Észlelés Tervező</h2>
+                <div class="card">
+                     <div id="planner-filters" class="planner-filters">
+                         <input type="text" id="planner-search" placeholder="Keresés név alapján...">
+                         <select id="planner-type-filter">
+                             <option value="all">Minden típus</option>
+                         </select>
+                         <select id="planner-const-filter">
+                             <option value="all">Minden csillagkép</option>
+                         </select>
+                         <label class="toggle-switch">
+                            <input type="checkbox" id="planner-visible-only" checked>
+                            <span class="slider"></span>
+                            Csak a láthatók
+                        </label>
+                     </div>
+                     <div class="table-container">
+                         <table id="planner-table">
+                             <thead>
+                                 <tr>
+                                     <th>Név</th>
+                                     <th>Típus</th>
+                                     <th>Csillagkép</th>
+                                     <th>Magasság</th>
+                                     <th>Láthatóság</th>
+                                 </tr>
+                             </thead>
+                             <tbody id="planner-table-body">
+                                 <!-- Planner rows will be injected by JS -->
+                             </tbody>
+                         </table>
+                     </div>
                 </div>
             </section>
 
@@ -156,9 +194,7 @@
                 <h2><i class="ph-sun-horizon"></i> Helyi Analemma</h2>
                 <div class="card">
                     <p class="description">
-                        A Nap látszólagos helyzete az égen minden nap ugyanabban az időpontban (helyi dél) egy éven keresztül.
-                        A számítás a delelés időpontjára történik (UTC 12:00-hoz legközelebbi), ami az Ön időzónájában kb. <strong id="analemma-local-time">--:--</strong>.
-                        A pulzáló pont a mai napot jelöli.
+                        A Föld pályájának és tengelyferdeségének köszönhetően a Nap déli pozíciója egy jellegzetes 'nyolcas' alakot, az analemmát rajzolja ki az év során. A görbe alakja függ a földrajzi szélességtől; az Egyenlítőhöz közelebb laposabb, a sarkok felé nyújtottabb. A számítás a delelés időpontjára történik, ami az Ön időzónájában kb. <strong id="analemma-local-time">--:--</strong>.
                     </p>
                     <div class="canvas-container">
                          <canvas id="analemma-canvas" width="600" height="400"></canvas>

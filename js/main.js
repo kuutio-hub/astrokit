@@ -8,8 +8,9 @@ import { initAnalemma } from './modules/analemma.js';
 import { initCalendar } from './modules/calendar.js';
 import { initWiki } from './modules/wiki.js';
 import { initPolarAlign, stopPolarAlignAnimation } from './modules/polar_align.js';
+import { initPlanner } from './modules/planner.js';
 
-const APP_VERSION = 'v0.9.0';
+const APP_VERSION = 'v1.0.0';
 
 document.addEventListener('DOMContentLoaded', async () => {
     displayVersion();
@@ -26,6 +27,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         const coords = await getUserLocation();
         await loadDashboardData(coords.latitude, coords.longitude);
         
+        const plannerNavItem = document.querySelector('.nav-item[data-target="planner"]');
+        if(plannerNavItem) {
+            plannerNavItem.addEventListener('click', () => {
+                initPlanner(coords.latitude, coords.longitude);
+            }, { once: true });
+        }
+        
         document.querySelector('.nav-item[data-target="analemma"]').addEventListener('click', () => {
            initAnalemma(coords.latitude, coords.longitude);
         }, { once: true });
@@ -34,13 +42,15 @@ document.addEventListener('DOMContentLoaded', async () => {
            initPolarAlign(coords.latitude, coords.longitude);
         });
 
+        if(window.location.hash === '#planner') {
+            initPlanner(coords.latitude, coords.longitude);
+        }
         if(window.location.hash === '#analemma') {
             initAnalemma(coords.latitude, coords.longitude);
         }
         if(window.location.hash === '#polar-align') {
             initPolarAlign(coords.latitude, coords.longitude);
         }
-
 
         hideLoader();
     } catch (error) {
@@ -57,8 +67,7 @@ function displayVersion() {
 }
 
 function setupNavigation() {
-    const desktopNavItems = document.querySelectorAll('.desktop-nav .nav-item');
-    const mobileNavItems = document.querySelectorAll('.mobile-menu-overlay .mobile-nav-item');
+    const allNavItems = document.querySelectorAll('[data-target]');
     const contentSections = document.querySelectorAll('.content-section');
     const menuToggle = document.getElementById('menu-toggle');
     const mobileMenu = document.getElementById('mobile-menu');
@@ -72,23 +81,15 @@ function setupNavigation() {
             activeSection.classList.add('active');
         }
 
-        desktopNavItems.forEach(i => i.classList.toggle('active', i.dataset.target === targetId));
+        document.querySelectorAll('.desktop-nav .nav-item').forEach(i => i.classList.toggle('active', i.dataset.target === targetId));
         
         window.location.hash = targetId;
 
-        // Close mobile menu
         mobileMenu.classList.remove('active');
         menuToggle.querySelector('i').className = 'ph ph-list';
     };
 
-    desktopNavItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            activateTab(item.dataset.target);
-        });
-    });
-
-    mobileNavItems.forEach(item => {
+    allNavItems.forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
             activateTab(item.dataset.target);

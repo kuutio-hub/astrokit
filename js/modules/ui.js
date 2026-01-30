@@ -1,6 +1,4 @@
 
-import { moonPhaseSVGs } from '../data/moon_phases.js';
-
 function formatTime(date) {
     if (!date || isNaN(date)) return 'N/A';
     return date.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
@@ -28,7 +26,6 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
     const moonIllumination = moonData.illumination;
     const moonPhaseName = getHungarianMoonPhaseName(moonIllumination.phase);
 
-    // --- Create a comprehensive, sorted list of events for the next 24 hours ---
     const today = new Date();
     const tomorrow = new Date();
     tomorrow.setDate(today.getDate() + 1);
@@ -46,11 +43,8 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
         { name: '<i class="ph-cloud-moon"></i> Polgári szürkület vége', time: sunToday.dusk, type: 'sun' },
         { name: '<i class="ph-star"></i> Csillagászati sötétség kezdete', time: sunToday.night, type: 'dark' },
         { name: '<i class="ph-star-half"></i> Csillagászati sötétség vége', time: sunToday.nightEnd, type: 'dark' },
-        
         { name: '<i class="ph-arrow-up"></i> Holdkelte', time: moonToday.rise, type: 'moon' },
         { name: '<i class="ph-arrow-down"></i> Holdnyugta', time: moonToday.set, type: 'moon' },
-
-        // Add tomorrow's events to catch things that happen overnight
         { name: '<i class="ph-sunrise"></i> Napkelte (holnap)', time: sunTomorrow.sunrise, type: 'sun' },
         { name: '<i class="ph-star-half"></i> Csillagászati sötétség vége (holnap)', time: sunTomorrow.nightEnd, type: 'dark' },
         { name: '<i class="ph-arrow-up"></i> Holdkelte (holnap)', time: moonTomorrow.rise, type: 'moon' },
@@ -67,7 +61,6 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
         .map(e => `<li><span class="label">${e.name}</span> <span class="value">${formatTime(e.time)}</span></li>`)
         .join('');
 
-    // --- Sort Moon Phases ---
     const sortedPhases = Object.entries(nextPhases)
         .map(([key, date]) => ({ name: getPhaseName(key), date }))
         .sort((a, b) => a.date - b.date);
@@ -109,7 +102,9 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
             </button>
             <div class="accordion-content active" style="max-height: fit-content; padding: 1.5rem;">
                  <div class="moon-phase-container">
-                    <div class="moon-phase-visual" id="moon-visual"></div>
+                    <div class="moon-phase-visual">
+                        <canvas id="moon-visual-canvas" width="100" height="100"></canvas>
+                    </div>
                     <strong>${moonPhaseName}</strong>
                     <p>${(moonIllumination.fraction * 100).toFixed(1)}% megvilágított</p>
                 </div>
@@ -136,38 +131,66 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
     `;
 
     container.innerHTML = dashboardHTML;
-    updateMoonVisual(moonIllumination.phase);
+    const canvas = document.getElementById('moon-visual-canvas');
+    if (canvas) {
+        updateMoonVisual(canvas, moonIllumination.phase);
+    }
     
     updateMoonPosition(lat, lon);
-    setInterval(() => updateMoonPosition(lat, lon), 60000); // Update every minute
+    setInterval(() => updateMoonPosition(lat, lon), 60000);
 }
 
-function updateMoonVisual(phase) {
-    const visual = document.getElementById('moon-visual');
-    if (!visual) return;
+function updateMoonVisual(canvas, phase) {
+    const ctx = canvas.getContext('2d');
+    const { width, height } = canvas;
+    const center = { x: width / 2, y: height / 2 };
+    const radius = width / 2 - 1;
 
-    // Total steps in a full cycle (0-27)
-    const totalSteps = 28; 
-    // Calculate the index in our 0-27 steps
-    const stepIndex = Math.round(phase * totalSteps) % totalSteps;
+    // phase: 0=new, 0.25=1st Q, 0.5=full, 0.75=3rd Q
     
-    let svg;
-    let transform = '';
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+    
+    // Draw earthshine (dark part)
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, radius, 0, 2 * Math.PI);
+    ctx.fillStyle = '#33373D';
+    ctx.fill();
 
-    // The first half of the cycle (0-14, waxing) uses the images directly
-    if (stepIndex <= 14) {
-        svg = moonPhaseSVGs[stepIndex];
-    } else {
-        // The second half (15-27, waning) mirrors the first half's images
-        // e.g., phase 15 mirrors 13, 16 mirrors 12, ..., 27 mirrors 1
-        const mirrorIndex = totalSteps - stepIndex;
-        svg = moonPhaseSVGs[mirrorIndex];
-        // We apply a horizontal flip
-        transform = 'transform: scaleX(-1);';
+    // Draw lit part
+    const angle = (phase - 0.25) * 2 * Math.PI; // Angle of the sun
+    const terminatorX = center.x - Math.cos(angle) * radius;
+    const terminatorY = center.y - Math.sin(angle) * radius;
+
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, radius, 0, 2 * Math.PI);
+    ctx.save();
+    ctx.clip(); // Clip to the circle
+
+    if (phase <= 0.5) { // Waxing
+        ctx.beginPath();
+        ctx.rect(terminatorX, 0, width, height);
+    } else { // Waning
+         ctx.beginPath();
+         ctx.rect(0, 0, terminatorX, height);
     }
 
-    visual.innerHTML = `<div style="${transform}">${svg || moonPhaseSVGs[0]}</div>`;
+    ctx.fillStyle = '#f0f0f0';
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.ellipse(
+        center.x,
+        center.y,
+        radius,
+        Math.abs(radius * Math.cos(phase * 2 * Math.PI)),
+        -angle,
+        0, 2*Math.PI
+    );
+    ctx.fill();
+    ctx.restore();
 }
+
 
 function updateMoonPosition(lat, lon) {
     const now = new Date();
