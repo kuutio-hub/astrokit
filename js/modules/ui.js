@@ -31,12 +31,10 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
         { name: '<i class="ph-sunrise"></i> Napkelte', time: sunData.sunrise },
         { name: '<i class="ph-sun-horizon"></i> Delelés', time: sunData.solarNoon },
         { name: '<i class="ph-sunset"></i> Napnyugta', time: sunData.sunset },
-        { name: '<i class="ph-clock"></i> Polgári szürkület (reggel)', time: sunData.dawn },
-        { name: '<i class="ph-clock"></i> Polgári szürkület (este)', time: sunData.dusk },
-        { name: '<i class="ph-star"></i> Csillagászati sötétség kezdete', time: sunData.night },
-        { name: '<i class="ph-star-half"></i> Csillagászati sötétség vége', time: sunData.nightEnd },
         { name: '<i class="ph-arrow-up"></i> Holdkelte', time: moonData.rise },
         { name: '<i class="ph-arrow-down"></i> Holdnyugta', time: moonData.set },
+        { name: '<i class="ph-star"></i> Csillagászati sötétség kezdete', time: sunData.night },
+        { name: '<i class="ph-star-half"></i> Csillagászati sötétség vége', time: sunData.nightEnd },
     ];
 
     const sortedEvents = skyEvents
@@ -68,25 +66,35 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
     const dashboardHTML = `
         <div class="dashboard-grid">
             <div class="card">
-                <h2><i class="ph-clock-countdown" style="color: var(--accent-color);"></i> Következő Események</h2>
+                <h2><i class="ph-clock-countdown"></i> Következő Események</h2>
                 <ul class="data-list">
                     ${eventsHTML || '<li><span class="label">Nincs több esemény a mai napon.</span></li>'}
                 </ul>
             </div>
 
             <div class="card">
-                <h2><i class="ph-moon" style="color: var(--moon-color);"></i> Hold Adatok</h2>
+                <h2><i class="ph-moon"></i> Hold Fázis</h2>
                 <div class="moon-phase-container">
-                    <div class="moon-phase-visual" id="moon-visual">
-                        <div class="moon-phase-shadow" id="moon-shadow"></div>
+                    <div class="moon-phase-visual">
+                         <div class="moon-phase-illuminated" id="moon-illuminated"></div>
                     </div>
                     <strong>${moonPhaseName}</strong>
                     <p>${(moonIllumination.fraction * 100).toFixed(1)}% megvilágított</p>
                 </div>
                 <ul class="data-list">
-                    <li><span class="label"><i class="ph-ruler"></i> Távolság</span> <span class="value">${moonData.distance.toFixed(0)} km</span></li>
-                    <li><span class="label"><i class="ph-arrows-out-line-vertical"></i> Delelési magasság</span> <span class="value">${formatAngle(moonData.culmination.altitude)}</span></li>
+                     <li><span class="label"><i class="ph-ruler"></i> Távolság</span> <span class="value">${moonData.distance.toFixed(0)} km</span></li>
+                     <li><span class="label"><i class="ph-arrows-out-line-vertical"></i> Horizont feletti magasság (deleléskor)</span> <span class="value">${formatAngle(moonData.culmination.altitude)}</span></li>
                 </ul>
+            </div>
+            
+            <div class="card" id="moon-position-card">
+                 <h2><i class="ph-navigation-arrow"></i> Hold Jelenlegi Helyzete</h2>
+                 <ul class="data-list">
+                    <li><span class="label">Magasság</span><span class="value" id="moon-alt"></span></li>
+                    <li><span class="label">Azimut</span><span class="value" id="moon-az"></span></li>
+                    <li><span class="label">Ekliptikai Hosszúság</span><span class="value" id="moon-ecl-lon"></span></li>
+                    <li><span class="label">Ekliptikai Szélesség</span><span class="value" id="moon-ecl-lat"></span></li>
+                 </ul>
             </div>
             
             <div class="card">
@@ -95,40 +103,43 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
                     ${phasesHTML}
                 </ul>
             </div>
-
-            <div class="card">
-                <h2><i class="ph-map-pin"></i> Helyzet</h2>
-                 <p class="description">Az adatok az alábbi koordinátákra lettek számítva:</p>
-                <ul class="data-list">
-                    <li><span class="label">Szélesség</span><span class="value">${lat.toFixed(4)}°</span></li>
-                    <li><span class="label">Hosszúság</span><span class="value">${lon.toFixed(4)}°</span></li>
-                </ul>
-            </div>
         </div>
     `;
 
     dashboard.innerHTML = dashboardHTML;
     updateMoonVisual(moonIllumination.phase);
+    
+    // Start real-time moon position updates
+    updateMoonPosition(lat, lon);
+    setInterval(() => updateMoonPosition(lat, lon), 60000); // Update every minute
 }
 
 function updateMoonVisual(phase) {
-    const shadow = document.getElementById('moon-shadow');
-    if (!shadow) return;
+    const illuminated = document.getElementById('moon-illuminated');
+    if (!illuminated) return;
 
     // phase: 0=new, 0.25=1st Q, 0.5=full, 0.75=3rd Q
-    let rotation, translateX;
-
-    if (phase <= 0.5) { // Waxing (növekvő), new moon to full moon
-        // Shadow is on the left, moves from 0% (covering) to -100% (off-screen)
-        rotation = 0;
-        translateX = (phase / 0.5) * -100;
-    } else { // Waning (fogyó), full moon to new moon
-        // Shadow is on the right, moves from 100% (off-screen) to 0% (covering)
-        rotation = 180;
-        translateX = (1 - ((phase - 0.5) / 0.5)) * 100;
+    // We move the white circle from right (translateX(100%)) to center (0%) and back to left (-100%)
+    let translateX;
+    if (phase <= 0.5) { // Waxing (növekvő), new to full
+        // Moves from right edge to center
+        translateX = 100 - (phase / 0.5) * 100;
+    } else { // Waning (fogyó), full to new
+        // Moves from center to left edge
+        translateX = -((phase - 0.5) / 0.5) * 100;
     }
     
-    shadow.style.transform = `rotate(${rotation}deg) translateX(${translateX}%)`;
+    illuminated.style.transform = `translateX(${translateX}%)`;
+}
+
+function updateMoonPosition(lat, lon) {
+    const now = new Date();
+    const pos = SunCalc.getMoonPosition(now, lat, lon);
+    
+    document.getElementById('moon-alt').textContent = formatAngle(pos.altitude);
+    document.getElementById('moon-az').textContent = formatAngle(pos.azimuth);
+    document.getElementById('moon-ecl-lon').textContent = `${pos.ecliptic.lon.toFixed(2)}°`;
+    document.getElementById('moon-ecl-lat').textContent = `${pos.ecliptic.lat.toFixed(2)}°`;
 }
 
 

@@ -14,6 +14,10 @@
     --error-bg: #481212;
     --error-text: #f8d7da;
     --error-border: #f5c6cb;
+    --event-meteor: #2a9d8f;
+    --event-conjunction: #e9c46a;
+    --event-eclipse: #f4a261;
+    --event-opposition: #e76f51;
 }
 
 body.night-mode {
@@ -31,6 +35,10 @@ body.night-mode {
     --error-bg: #2b0000;
     --error-text: #ff665c;
     --error-border: #4d0000;
+    --event-meteor: #d13c31;
+    --event-conjunction: #d13c31;
+    --event-eclipse: #d13c31;
+    --event-opposition: #d13c31;
 }
 
 
@@ -59,7 +67,6 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    text-align: center;
     padding: 2rem 1rem;
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 1.5rem;
@@ -75,7 +82,6 @@ header h1 {
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 1rem;
 }
 
@@ -165,7 +171,7 @@ main {
 
 .dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1.5rem;
 }
 
@@ -175,12 +181,6 @@ main {
     border-radius: 8px;
     padding: 1.5rem;
     box-shadow: 0 4px 12px var(--shadow-color);
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px var(--shadow-color);
 }
 
 .card h2, .card h3 {
@@ -229,6 +229,7 @@ main {
 
 .moon-phase-container {
     text-align: center;
+    margin-bottom: 1rem;
 }
 
 .moon-phase-visual {
@@ -236,96 +237,86 @@ main {
     height: 100px;
     border-radius: 50%;
     margin: 1rem auto;
-    background-color: var(--moon-color);
-    box-shadow: inset -10px 0 20px rgba(0, 0, 0, 0.3);
+    background-color: black;
     overflow: hidden;
     position: relative;
 }
-body.night-mode .moon-phase-visual {
-    box-shadow: inset -5px 0 15px rgba(0,0,0,0.5);
-}
-
-.moon-phase-shadow {
-    content: '';
+.moon-phase-illuminated {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    background-color: var(--bg-color);
-    transform-origin: center;
+    background-color: var(--moon-color);
+    /* Simple crater effect */
+    background-image: radial-gradient(circle at 20% 30%, rgba(0,0,0,0.1) 5%, transparent 5.5%),
+                      radial-gradient(circle at 70% 60%, rgba(0,0,0,0.1) 8%, transparent 8.5%),
+                      radial-gradient(circle at 50% 85%, rgba(0,0,0,0.08) 4%, transparent 4.5%);
     transition: transform 0.5s ease-out;
+    -webkit-mask-image: radial-gradient(circle, white 100%, black 100%);
+    mask-image: radial-gradient(circle, white 100%, black 100%);
 }
+body.night-mode .moon-phase-illuminated {
+    background-image: none;
+}
+
 
 /* Calculators & Astrophoto */
-.main-gear-settings {
-    margin-bottom: 2rem;
-}
-
 .form-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1rem;
 }
 
-.calculator-layout {
+.form-grid-2 {
     display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 2rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
 }
 
-.calculator-nav h4 {
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-    color: var(--accent-color);
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+.thematic-results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
 }
-.calculator-nav h4:first-child {
-    margin-top: 0;
-}
-
-.calculator-nav ul {
-    list-style: none;
-}
-.calculator-nav a {
-    display: block;
-    padding: 0.5rem 1rem;
-    text-decoration: none;
-    color: var(--text-secondary-color);
+.data-list-results li {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+    padding: 0.75rem;
+    border: none;
     border-radius: 6px;
-    margin-bottom: 0.25rem;
-    transition: all 0.2s ease;
+    background-color: var(--bg-color);
+    margin-bottom: 0.5rem;
 }
-.calculator-nav a:hover {
-    background-color: var(--secondary-color);
-    color: var(--text-color);
+.data-list-results .result-title {
+    font-weight: bold; color: var(--text-color); width: 100%; display: flex; justify-content: space-between;
 }
-.calculator-nav a.active {
-    background-color: var(--accent-color);
-    color: white;
-    font-weight: bold;
+.data-list-results .result-value {
+    font-size: 1.2rem; font-weight: bold; color: var(--accent-color);
 }
-body.night-mode .calculator-nav a.active {
-    color: #000;
+.data-list-results .result-inputs {
+    font-size: 0.8rem; color: var(--text-secondary-color);
 }
 
+.astrophoto-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 1.5rem;
+}
 
-.calculator-card {
-    display: none;
-    background-color: var(--primary-color);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1.5rem;
-    animation: fadeIn 0.3s ease;
+.fov-canvas-container {
+    margin-top: 1rem;
 }
-.calculator-card.active {
-    display: block;
-}
-.calculator-card h3 {
-    margin-top: 0;
+
+#fov-info {
+    font-size: 0.85rem;
+    color: var(--text-secondary-color);
+    text-align: center;
+    margin-top: 0.5rem;
 }
 
 form label {
@@ -344,24 +335,20 @@ form input, form select {
     font-size: 1rem;
 }
 
-form .result, .calculator-card .result {
-    margin-top: 1.5rem;
+form .result {
+    margin-top: 1rem;
     font-size: 1.1rem;
-    color: var(--text-color);
-    background-color: var(--bg-color);
-    padding: 1rem;
-    border-radius: 6px;
-    border-left: 3px solid var(--accent-color);
-}
-.calculator-card .result span {
-    font-weight: bold;
     color: var(--accent-color);
+    font-weight: bold;
 }
+form .result span {
+    color: var(--text-color);
+}
+
 
 .info-icon {
     cursor: pointer;
     color: var(--text-secondary-color);
-    margin-left: 0.5rem;
     transition: color 0.2s;
 }
 .info-icon:hover {
@@ -381,11 +368,10 @@ form .result, .calculator-card .result {
     font-family: 'Courier New', Courier, monospace;
 }
 
-/* Analemma */
+/* Analemma & FOV Canvas */
 .canvas-container {
     position: relative;
     width: 100%;
-    max-width: 600px;
     margin: 1rem auto 0;
     background-color: var(--bg-color);
     border: 1px solid var(--border-color);
@@ -393,47 +379,124 @@ form .result, .calculator-card .result {
     overflow: hidden;
 }
 
-#analemma-canvas {
+#analemma-canvas, #fov-canvas {
     width: 100%;
     height: auto;
     display: block;
 }
 
 /* Calendar */
-#calendar-preview ul {
-    list-style: none;
-    margin-top: 1rem;
-    padding-left: 1rem;
-    border-left: 2px solid var(--accent-color);
+#calendar-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
 }
-#calendar-preview li {
-    margin-bottom: 0.5rem;
-}
-
-.button-primary {
-    display: inline-block;
-    background-color: var(--accent-hover-color);
-    color: white;
-    padding: 0.75rem 1.5rem;
+#calendar-controls button {
+    background: none;
     border: none;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: 600;
+    color: var(--accent-color);
+    font-size: 1.5rem;
     cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
+}
+#calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+.calendar-day {
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    min-height: 100px;
+    padding: 0.5rem;
+    font-weight: bold;
+}
+.calendar-day.other-month {
+    color: var(--text-secondary-color);
+    background-color: transparent;
+}
+.calendar-day-header {
+    text-align: right;
+    font-size: 0.9rem;
+}
+.calendar-events {
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+}
+.event-bar {
+    padding: 2px 4px;
+    border-radius: 3px;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: white;
+}
+.event-meteor { background-color: var(--event-meteor); }
+.event-conjunction { background-color: var(--event-conjunction); }
+.event-eclipse { background-color: var(--event-eclipse); }
+.event-opposition { background-color: var(--event-opposition); }
+
+#calendar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
     margin-top: 1rem;
+    font-size: 0.8rem;
+}
+#calendar-legend span {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+#calendar-legend .legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
 }
 
-body.night-mode .button-primary {
-    color: #000;
-}
 
-.button-primary:hover {
-    background-color: #1f6feb;
+/* Accordion (Wiki & Calculators) */
+.accordion {
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
 }
-
-body.night-mode .button-primary:hover {
-    background-color: #ff8c85;
+.accordion-header {
+    width: 100%;
+    background-color: var(--primary-color);
+    border: none;
+    padding: 0;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+}
+.accordion-header h3 {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+.accordion-icon {
+    transition: transform 0.3s ease;
+    font-size: 1.2rem;
+}
+.accordion-header.active .accordion-icon {
+    transform: rotate(180deg);
+}
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    background-color: var(--bg-color);
+    padding: 0 1.5rem;
+}
+.accordion-content.active {
+    padding: 1.5rem;
 }
 
 
@@ -489,27 +552,22 @@ footer {
 
 /* Responsive */
 @media (max-width: 900px) {
-    .calculator-layout {
+    .astrophoto-grid {
         grid-template-columns: 1fr;
-    }
-    .calculator-nav {
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 1rem;
-        margin-bottom: 1rem;
-    }
-    .calculator-nav ul {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
     }
 }
 @media (max-width: 768px) {
     header {
         flex-direction: column;
         gap: 1rem;
+        text-align: center;
+    }
+    header .title-container {
+        text-align: center;
     }
     header h1 {
         font-size: 1.8rem;
+        justify-content: center;
     }
     nav {
         flex-direction: column;

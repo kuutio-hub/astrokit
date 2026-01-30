@@ -5,25 +5,32 @@ import { displayDashboardData, showError, hideLoader } from './modules/ui.js';
 import { initCalculators } from './modules/calculators.js';
 import { initAstrofotoHelper } from './modules/astrofoto.js';
 import { initAnalemma } from './modules/analemma.js';
+import { initCalendar } from './modules/calendar.js';
+import { initWiki } from './modules/wiki.js';
+
+const APP_VERSION = 'v1.2.0';
 
 document.addEventListener('DOMContentLoaded', async () => {
+    displayVersion();
     setupNavigation();
     setupNightMode();
     initCalculators();
     initAstrofotoHelper();
+    initCalendar();
+    initWiki();
 
     try {
         const coords = await getUserLocation();
         await loadDashboardData(coords.latitude, coords.longitude);
         
         // Auto-start analemma generation
-        const analemmaSection = document.getElementById('analemma');
-        if (analemmaSection.classList.contains('active') || !window.location.hash) {
+        document.querySelector('.nav-item[data-target="analemma"]').addEventListener('click', () => {
+           initAnalemma(coords.latitude, coords.longitude);
+        }, { once: true });
+
+        // If analemma is the landing page, start it
+        if(window.location.hash === '#analemma') {
             initAnalemma(coords.latitude, coords.longitude);
-        } else {
-             document.querySelector('.nav-item[data-target="analemma"]').addEventListener('click', () => {
-                initAnalemma(coords.latitude, coords.longitude);
-             }, { once: true });
         }
 
         hideLoader();
@@ -32,6 +39,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         hideLoader();
     }
 });
+
+function displayVersion() {
+    const versionSpan = document.getElementById('app-version');
+    if(versionSpan) {
+        versionSpan.textContent = `Verzió: ${APP_VERSION}`;
+    }
+}
 
 function setupNavigation() {
     const navItems = document.querySelectorAll('.nav-item');
@@ -53,9 +67,14 @@ function setupNavigation() {
     
     // Check hash on load
     const currentHash = window.location.hash.substring(1);
-    const targetNavItem = document.querySelector(`.nav-item[data-target="${currentHash}"]`);
-    if (targetNavItem) {
-        targetNavItem.click();
+    if (currentHash) {
+        const targetNavItem = document.querySelector(`.nav-item[data-target="${currentHash}"]`);
+        if (targetNavItem) {
+            targetNavItem.click();
+        }
+    } else {
+        // Default to dashboard if no hash
+         document.querySelector('.nav-item[data-target="dashboard"]').click();
     }
 }
 

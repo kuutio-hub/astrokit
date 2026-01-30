@@ -59,12 +59,11 @@ export async function initAnalemma(lat, lon) {
         let sunPositions = await getAnalemmaData(id);
         
         if (!sunPositions) {
-            // Use setTimeout to allow the UI to update and show the loader before the heavy computation starts
             sunPositions = await new Promise(resolve => {
                 setTimeout(() => {
                     const positions = calculateAnalemma(lat, lon);
                     resolve(positions);
-                }, 100);
+                }, 50);
             });
             await saveAnalemmaData(id, sunPositions);
         }
@@ -92,7 +91,7 @@ function calculateAnalemma(lat, lon) {
         
         sunPositions.push({ 
             altitude: pos.altitude * 180 / Math.PI, 
-            azimuth: pos.azimuth * 180 / Math.PI 
+            azimuth: (pos.azimuth * 180 / Math.PI) + 180 // Azimuth correction
         });
     }
     return sunPositions;
@@ -104,32 +103,28 @@ function drawAnalemma(canvas, sunPositions) {
     const width = canvas.width;
     const height = canvas.height;
     
-    // Use requestAnimationFrame for smoother rendering
     requestAnimationFrame(() => {
-        ctx.clearRect(0, 0, width, height);
-        
-        // Dynamic colors based on current theme
         const styles = getComputedStyle(document.body);
         ctx.fillStyle = styles.getPropertyValue('--bg-color').trim();
         ctx.fillRect(0, 0, width, height);
+        
         ctx.strokeStyle = styles.getPropertyValue('--border-color').trim();
         ctx.fillStyle = styles.getPropertyValue('--text-color').trim();
         ctx.font = "12px sans-serif";
         
-        let minAlt = 90, maxAlt = 0, minAz = 180, maxAz = 180;
-        sunPositions.forEach(pos => {
-            if (pos.altitude < minAlt) minAlt = pos.altitude;
-            if (pos.altitude > maxAlt) maxAlt = pos.altitude;
-            if (pos.azimuth < minAz) minAz = pos.azimuth;
-            if (pos.azimuth > maxAz) maxAz = pos.azimuth;
-        });
+        let minAlt = Math.min(...sunPositions.map(p => p.altitude));
+        let maxAlt = Math.max(...sunPositions.map(p => p.altitude));
+        let minAz = Math.min(...sunPositions.map(p => p.azimuth));
+        let maxAz = Math.max(...sunPositions.map(p => p.azimuth));
         
-        const padding = 40;
+        const padding = 50;
         const plotWidth = width - 2 * padding;
         const plotHeight = height - 2 * padding;
+        
         const altRange = maxAlt - minAlt;
         const azRange = maxAz - minAz;
         
+        // Draw axes
         ctx.beginPath();
         ctx.moveTo(padding, padding);
         ctx.lineTo(padding, height - padding);
@@ -137,22 +132,25 @@ function drawAnalemma(canvas, sunPositions) {
         ctx.lineTo(width - padding, height - padding);
         ctx.stroke();
 
+        // Draw labels
         ctx.textAlign = 'right';
-        ctx.fillText(`${maxAlt.toFixed(1)}°`, padding - 5, padding + 5);
-        ctx.fillText(`${minAlt.toFixed(1)}°`, padding - 5, height - padding);
+        ctx.fillText(`${Math.ceil(maxAlt)}°`, padding - 8, padding + 5);
+        ctx.fillText(`${Math.floor(minAlt)}°`, padding - 8, height - padding);
         ctx.textAlign = 'center';
-        ctx.fillText('Déli Irány (180°)', width / 2, height - padding + 25);
+        ctx.fillText('Déli Irány', width / 2, height - padding + 25);
         ctx.save();
-        ctx.rotate(-Math.PI/2);
-        ctx.fillText('Magasság', -height/2, padding - 25);
+        ctx.translate(padding - 30, height / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('Magasság', 0, 0);
         ctx.restore();
 
+        // Plot points
         sunPositions.forEach((pos, index) => {
             const x = padding + ((pos.azimuth - minAz) / azRange) * plotWidth;
             const y = (height - padding) - ((pos.altitude - minAlt) / altRange) * plotHeight;
             
             ctx.beginPath();
-            if (index === 0 || index === 364) {
+            if (index === 0 || index >= 364) {
                  ctx.fillStyle = '#58a6ff'; // Winter Solstice
             } else if (Math.abs(index - 172) < 2) {
                  ctx.fillStyle = '#ffeb3b'; // Summer Solstice
@@ -162,7 +160,7 @@ function drawAnalemma(canvas, sunPositions) {
                 ctx.fillStyle = styles.getPropertyValue('--text-secondary-color').trim();
             }
            
-            ctx.arc(x, y, 2, 0, 2 * Math.PI);
+            ctx.arc(x, y, 2.5, 0, 2 * Math.PI);
             ctx.fill();
         });
     });

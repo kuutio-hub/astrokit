@@ -30,6 +30,7 @@
             <a href="#astrophoto" class="nav-item" data-target="astrophoto"><i class="ph-camera"></i> Asztrofotó</a>
             <a href="#analemma" class="nav-item" data-target="analemma"><i class="ph-sun-horizon"></i> Analemma</a>
             <a href="#calendar" class="nav-item" data-target="calendar"><i class="ph-calendar"></i> Naptár</a>
+            <a href="#wiki" class="nav-item" data-target="wiki"><i class="ph-books"></i> Tudástár</a>
         </nav>
 
         <main>
@@ -46,186 +47,73 @@
 
             <section id="calculators" class="content-section">
                 <h2><i class="ph-calculator"></i> Csillagászati Kalkulátorok</h2>
-                <p class="description">Válaszd ki a kívánt kalkulátort a listából. A felszerelésed alapadatait itt megadhatod, melyeket a kalkulátorok automatikusan használnak.</p>
                 
-                <div class="card main-gear-settings">
-                    <h3><i class="ph-gear-six"></i> Alap Felszerelés Beállításai</h3>
-                    <form id="main-gear-form" class="form-grid">
-                        <div><label>Távcső fókusztávolsága (mm): <input type="number" name="teleFocalLength" value="1000"></label></div>
-                        <div><label>Távcső átmérője (mm): <input type="number" name="teleAperture" value="120"></label></div>
-                        <div><label>Okulár fókusztávolsága (mm): <input type="number" name="eyeFocalLength" value="10"></label></div>
-                        <div><label>Okulár látómezeje (°): <input type="number" name="eyeAFOV" value="52"></label></div>
-                    </form>
-                </div>
-                
-                <div class="calculator-layout">
-                    <nav class="calculator-nav">
-                        <h4>Távcső</h4>
-                        <ul>
-                            <li><a href="#calc-magnification" class="calc-nav-link active">Nagyítás</a></li>
-                            <li><a href="#calc-true-fov" class="calc-nav-link">Valós Látómező</a></li>
-                            <li><a href="#calc-focal-ratio" class="calc-nav-link">F-arány</a></li>
-                            <li><a href="#calc-focal-length" class="calc-nav-link">Fókusztávolság</a></li>
-                            <li><a href="#calc-eyepiece-magnification" class="calc-nav-link">Okulár fókusz</a></li>
-                            <li><a href="#calc-max-magnification" class="calc-nav-link">Max. Nagyítás</a></li>
-                            <li><a href="#calc-dawes-limit" class="calc-nav-link">Dawes-határ</a></li>
-                            <li><a href="#calc-rayleigh-limit" class="calc-nav-link">Rayleigh-határ</a></li>
-                            <li><a href="#calc-limiting-magnitude" class="calc-nav-link">Határmagnitúdó</a></li>
-                            <li><a href="#calc-light-grasp" class="calc-nav-link">Fénygyűjtés aránya</a></li>
-                        </ul>
-                        <h4>Binokulár</h4>
-                        <ul>
-                             <li><a href="#calc-bino-real-fov-deg" class="calc-nav-link">Valós Látómező (°-ból)</a></li>
-                             <li><a href="#calc-bino-real-fov-m" class="calc-nav-link">Valós Látómező (m-ből)</a></li>
-                             <li><a href="#calc-bino-apparent-fov-simple" class="calc-nav-link">Látszólagos Látómező (Egyszerű)</a></li>
-                             <li><a href="#calc-bino-apparent-fov-iso" class="calc-nav-link">Látszólagos Látómező (ISO)</a></li>
-                        </ul>
-                        <h4>CCD/Kamera</h4>
-                        <ul>
-                            <li><a href="#calc-ccd-resolution" class="calc-nav-link">CCD Felbontás</a></li>
-                            <li><a href="#calc-ccd-pixel-size" class="calc-nav-link">CCD Képpontméret</a></li>
-                            <li><a href="#calc-ccd-chip-size" class="calc-nav-link">CCD Lapkaméret</a></li>
-                            <li><a href="#calc-dust-reflection" class="calc-nav-link">Porszem/Tükröződés</a></li>
-                        </ul>
-                         <h4>Átváltó</h4>
-                        <ul>
-                             <li><a href="#calc-in-mm" class="calc-nav-link">Inch ↔ MM</a></li>
-                        </ul>
-                    </nav>
-                    <div class="calculator-content">
-                        <!-- Telescope Calculators -->
-                        <div id="calc-magnification" class="calculator-card active">
-                            <h3>Nagyítás</h3>
-                            <form id="form-magnification"><label>Távcső fókusza (mm): <input type="number" name="teleFocalLength"></label><label>Okulár fókusza (mm): <input type="number" name="eyeFocalLength"></label></form>
-                            <p class="result">Nagyítás: <span id="res-magnification"></span>x <i class="ph-info-fill info-icon" data-formula="Nagyítás = Távcső Fókusz / Okulár Fókusz"></i></p>
-                        </div>
-                        <div id="calc-true-fov" class="calculator-card">
-                             <h3>Valós Látómező</h3>
-                             <form id="form-true-fov"><label>Okulár látómezeje (°): <input type="number" name="eyeAFOV"></label><label>Nagyítás: <input type="number" name="magnification"></label></form>
-                             <p class="result">Valós Látómező: <span id="res-true-fov"></span>° <i class="ph-info-fill info-icon" data-formula="Valós Látómező = Okulár Látszólagos Látómezeje / Nagyítás"></i></p>
-                        </div>
-                        <div id="calc-focal-ratio" class="calculator-card">
-                            <h3>F-arány (Nyílásviszony)</h3>
-                            <form id="form-focal-ratio"><label>Távcső fókusza (mm): <input type="number" name="teleFocalLength"></label><label>Távcső átmérője (mm): <input type="number" name="teleAperture"></label></form>
-                            <p class="result">F-arány: f/<span id="res-focal-ratio"></span> <i class="ph-info-fill info-icon" data-formula="F-arány = Fókusztávolság / Átmérő"></i></p>
-                        </div>
-                        <div id="calc-focal-length" class="calculator-card">
-                            <h3>Fókusztávolság</h3>
-                            <form id="form-focal-length"><label>Távcső átmérője (mm): <input type="number" name="teleAperture"></label><label>F-arány: <input type="number" name="focalRatio"></label></form>
-                            <p class="result">Fókusztávolság: <span id="res-focal-length"></span> mm <i class="ph-info-fill info-icon" data-formula="Fókusztávolság = Átmérő × F-arány"></i></p>
-                        </div>
-                        <div id="calc-eyepiece-magnification" class="calculator-card">
-                            <h3>Okulár Fókusz adott nagyításhoz</h3>
-                            <form id="form-eyepiece-magnification"><label>Távcső fókusza (mm): <input type="number" name="teleFocalLength"></label><label>Kívánt nagyítás: <input type="number" name="magnification"></label></form>
-                            <p class="result">Szükséges okulár: <span id="res-eyepiece-magnification"></span> mm <i class="ph-info-fill info-icon" data-formula="Okulár Fókusz = Távcső Fókusz / Nagyítás"></i></p>
-                        </div>
-                        <div id="calc-max-magnification" class="calculator-card">
-                            <h3>Maximális Elméleti Nagyítás</h3>
-                            <form id="form-max-magnification"><label>Távcső átmérője (mm): <input type="number" name="teleAperture"></label></form>
-                            <p class="result">Max. Nagyítás: <span id="res-max-magnification"></span>x <i class="ph-info-fill info-icon" data-formula="Max. Nagyítás = 2.5 × Távcső Átmérő (mm) [Maximum 350x]"></i></p>
-                        </div>
-                        <div id="calc-dawes-limit" class="calculator-card">
-                            <h3>Felbontóképesség (Dawes-határ)</h3>
-                            <form id="form-dawes-limit"><label>Távcső átmérője (mm): <input type="number" name="teleAperture"></label></form>
-                            <p class="result">Dawes-határ: <span id="res-dawes-limit"></span>" <i class="ph-info-fill info-icon" data-formula="Dawes-határ = 116 / Távcső Átmérő (mm)"></i></p>
-                        </div>
-                        <div id="calc-rayleigh-limit" class="calculator-card">
-                            <h3>Felbontóképesség (Rayleigh-határ)</h3>
-                            <form id="form-rayleigh-limit"><label>Távcső átmérője (mm): <input type="number" name="teleAperture"></label></form>
-                            <p class="result">Rayleigh-határ: <span id="res-rayleigh-limit"></span>" <i class="ph-info-fill info-icon" data-formula="Rayleigh-határ = 138 / Távcső Átmérő (mm)"></i></p>
-                        </div>
-                        <div id="calc-limiting-magnitude" class="calculator-card">
-                            <h3>Elméleti Határmagnitúdó</h3>
-                            <form id="form-limiting-magnitude"><label>Távcső átmérője (mm): <input type="number" name="teleAperture"></label></form>
-                            <p class="result">Határmagnitúdó: <span id="res-limiting-magnitude"></span>m <i class="ph-info-fill info-icon" data-formula="Magnitúdó = 7.7 + (5 × Log10(Átmérő (cm)))"></i></p>
-                        </div>
-                        <div id="calc-light-grasp" class="calculator-card">
-                            <h3>Fénygyűjtés Aránya</h3>
-                            <form id="form-light-grasp"><label>Nagyobbik átmérő (mm): <input type="number" name="aperture1"></label><label>Kisebbik átmérő (mm): <input type="number" name="aperture2" value="7"></label></form>
-                            <p class="result">Arány: <span id="res-light-grasp"></span>x <i class="ph-info-fill info-icon" data-formula="Arány = (Nagyobb Átmérő)² / (Kisebb Átmérő)²"></i></p>
-                        </div>
-                        
-                        <!-- Binocular Calculators -->
-                        <div id="calc-bino-real-fov-deg" class="calculator-card">
-                           <h3>Valós Látómező (m-ben)</h3>
-                           <form id="form-bino-real-fov-deg"><label>Látómező (°): <input type="number" name="fov_deg"></label></form>
-                           <p class="result">Látómező 1000m-en: <span id="res-bino-real-fov-deg"></span> m <i class="ph-info-fill info-icon" data-formula="Látómező @ 1000m = tan(Látómező °) × 1000"></i></p>
-                        </div>
-                        <div id="calc-bino-real-fov-m" class="calculator-card">
-                           <h3>Valós Látómező (°-ban)</h3>
-                           <form id="form-bino-real-fov-m"><label>Látómező 1000m-en (m): <input type="number" name="fov_m"></label></form>
-                           <p class="result">Látómező: <span id="res-bino-real-fov-m"></span>° <i class="ph-info-fill info-icon" data-formula="Látómező ° = arctan(Látómező @ 1000m / 1000)"></i></p>
-                        </div>
-                        <div id="calc-bino-apparent-fov-simple" class="calculator-card">
-                           <h3>Látszólagos Látómező (Egyszerű)</h3>
-                           <form id="form-bino-apparent-fov-simple"><label>Valós látómező (°): <input type="number" name="real_fov"></label><label>Nagyítás: <input type="number" name="magnification"></label></form>
-                           <p class="result">Látszólagos látómező: <span id="res-bino-apparent-fov-simple"></span>° <i class="ph-info-fill info-icon" data-formula="Látszólagos LM = Valós LM × Nagyítás"></i></p>
-                        </div>
-                        <div id="calc-bino-apparent-fov-iso" class="calculator-card">
-                           <h3>Látszólagos Látómező (ISO)</h3>
-                           <form id="form-bino-apparent-fov-iso"><label>Valós látómező (°): <input type="number" name="real_fov"></label><label>Nagyítás: <input type="number" name="magnification"></label></form>
-                           <p class="result">Látszólagos látómező: <span id="res-bino-apparent-fov-iso"></span>° <i class="ph-info-fill info-icon" data-formula="Látszólagos LM = 2 × arctan(Nagyítás × tan(Valós LM / 2))"></i></p>
-                        </div>
-
-                        <!-- CCD Calculators -->
-                        <div id="calc-ccd-resolution" class="calculator-card">
-                            <h3>CCD Felbontás</h3>
-                            <form id="form-ccd-resolution"><label>Képpontméret (μm): <input type="number" name="pixelSize"></label><label>Távcső fókusza (mm): <input type="number" name="teleFocalLength"></label></form>
-                            <p class="result">Felbontás: <span id="res-ccd-resolution"></span> "/pixel <i class="ph-info-fill info-icon" data-formula="Felbontás = (Képpontméret / Fókusztávolság) × 206.265"></i></p>
-                        </div>
-                        <div id="calc-ccd-pixel-size" class="calculator-card">
-                           <h3>CCD Képpontméret</h3>
-                           <form id="form-ccd-pixel-size"><label>Lapka mérete (mm): <input type="number" name="chipSize"></label><label>Felbontás (pixel): <input type="number" name="resolution"></label></form>
-                           <p class="result">Képpontméret: <span id="res-ccd-pixel-size"></span> μm/pixel <i class="ph-info-fill info-icon" data-formula="Képpontméret (μm) = (Lapkaméret (mm) / Felbontás) × 1000"></i></p>
-                        </div>
-                        <div id="calc-ccd-chip-size" class="calculator-card">
-                           <h3>CCD Lapkaméret</h3>
-                           <form id="form-ccd-chip-size"><label>Képpontméret (μm): <input type="number" name="pixelSize"></label><label>Felbontás (pixel): <input type="number" name="resolution"></label></form>
-                           <p class="result">Lapkaméret: <span id="res-ccd-chip-size"></span> mm <i class="ph-info-fill info-icon" data-formula="Lapkaméret (mm) = Képpontméret (μm) × Felbontás / 1000"></i></p>
-                        </div>
-                        <div id="calc-dust-reflection" class="calculator-card">
-                            <h3>Porszem/Tükröződés Mérete</h3>
-                            <form id="form-dust-reflection"><label>Képpontméret (μm): <input type="number" name="pixelSize"></label><label>F-arány: <input type="number" name="focalRatio"></label><label>Árnyék átmérője (pixel): <input type="number" name="shadow_px"></label></form>
-                            <p class="result">Valós méret: <span id="res-dust-reflection"></span> mm <i class="ph-info-fill info-icon" data-formula="Méret (mm) = Képpontméret (mm) × F-arány × Árnyék átmérő (px)"></i></p>
-                        </div>
-
-                        <!-- Converters -->
-                         <div id="calc-in-mm" class="calculator-card">
-                            <h3>Inch ↔ Milliméter Átváltó</h3>
-                            <form id="form-in-mm" class="form-grid">
-                                <div><label>Inch: <input type="number" name="inches" value="1"></label></div>
-                                <div><label>Milliméter: <input type="number" name="mm" value="25.4"></label></div>
-                            </form>
-                             <p class="result">Átváltási arány: 1 inch = 25.4 mm</p>
-                         </div>
+                <div class="accordion">
+                    <button class="accordion-header">
+                        <h3><i class="ph-gear-six"></i> Felszerelés Alapbeállításai</h3>
+                        <i class="ph ph-caret-down accordion-icon"></i>
+                    </button>
+                    <div class="accordion-content">
+                        <p class="description">Add meg itt a felszerelésed adatait. Ezek az értékek automatikusan kitöltik a megfelelő mezőket, de a számításoknál felülírhatod őket.</p>
+                        <form id="main-gear-form" class="form-grid">
+                             <div><label>Távcső fókusztávolsága (mm): <input type="number" name="teleFocalLength" value="1000"></label></div>
+                             <div><label>Távcső átmérője (mm): <input type="number" name="teleAperture" value="120"></label></div>
+                             <div><label>Okulár fókusztávolsága (mm): <input type="number" name="eyeFocalLength" value="10"></label></div>
+                             <div><label>Okulár látómezeje (°): <input type="number" name="eyeAFOV" value="52"></label></div>
+                             <div><label>Kamera pixelmérete (μm): <input type="number" name="pixelSize" value="3.76"></label></div>
+                        </form>
                     </div>
                 </div>
 
+                <div class="thematic-results-grid">
+                    <div class="card">
+                         <h3><i class="ph-binoculars"></i> Optikai Jellemzők</h3>
+                         <ul id="results-optics" class="data-list-results"></ul>
+                    </div>
+                     <div class="card">
+                         <h3><i class="ph-ruler"></i> Felbontás és Fénygyűjtés</h3>
+                         <ul id="results-resolution" class="data-list-results"></ul>
+                    </div>
+                    <div class="card">
+                        <h3><i class="ph-camera-rotate"></i> Kamera és Érzékelő</h3>
+                        <ul id="results-ccd" class="data-list-results"></ul>
+                    </div>
+                </div>
             </section>
 
             <section id="astrophoto" class="content-section">
                 <h2><i class="ph-camera"></i> Asztrofotós Segédlet</h2>
-                <div class="card">
-                    <h3>Maximális Expozíciós Idő (Szabály)</h3>
-                    <p class="description">Becslés a csillagok bemozdulásmentes fotózásához álló állványról. A klasszikus "500-as" vagy precízebb "NPF" szabály is használható.</p>
-                    <form id="calc-exposure">
-                        <label>Objektív fókusztávolsága (mm): <input type="number" id="exp-focal-length" value="18" required></label>
-                        <label>Szenzor típusa: 
-                            <select id="exp-sensor-crop">
-                                <option value="1">Full Frame</option>
-                                <option value="1.5">APS-C (Nikon, Sony)</option>
-                                <option value="1.6">APS-C (Canon)</option>
-                                <option value="2">Mikro NégyHarmad</option>
-                            </select>
-                        </label>
-                         <label>Szabály: 
-                            <select id="exp-rule">
-                                <option value="500">500-as szabály</option>
-                                <option value="300">300-as szabály (Precízebb)</option>
-                            </select>
-                        </label>
-                        <p class="result">Maximális expozíció: <span id="exp-result">16.67 s</span></p>
-                    </form>
+                <div class="astrophoto-grid">
+                    <div class="card">
+                        <h3>Maximális Expozíciós Idő</h3>
+                        <p class="description">Becslés a csillagok bemozdulásmentes fotózásához álló állványról (követés nélkül).</p>
+                        <form id="calc-exposure">
+                             <label>Objektív fókusztávolsága (mm): <input type="number" id="exp-focal-length" value="50" required></label>
+                             <label>Szenzor típusa: 
+                                 <select id="exp-sensor-crop">
+                                     <option value="1">Full Frame</option>
+                                     <option value="1.5" selected>APS-C (Nikon, Sony)</option>
+                                     <option value="1.6">APS-C (Canon)</option>
+                                     <option value="2">Mikro NégyHarmad</option>
+                                 </select>
+                             </label>
+                             <p class="result">500-as szabály: <span id="exp-result-500">6.67 s</span></p>
+                             <p class="result">NPF szabály (ajánlott): <span id="exp-result-npf">... s</span></p>
+                        </form>
+                    </div>
+                    <div class="card">
+                        <h3>Látómező Szimulátor</h3>
+                        <p class="description">Válaszd ki a felszerelésed és egy célpontot, hogy lásd, mi fér a képedbe.</p>
+                        <form id="fov-form" class="form-grid-2">
+                             <div><label>Fókusztávolság (mm): <input type="number" name="fovFocalLength" value="1000"></label></div>
+                             <div><label>Kamera: <select name="fovCamera"></select></label></div>
+                             <div><label>Célpont: <select name="fovObject"></select></label></div>
+                        </form>
+                        <div class="canvas-container fov-canvas-container">
+                             <canvas id="fov-canvas" width="400" height="300"></canvas>
+                             <div id="fov-info"></div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -244,35 +132,53 @@
             </section>
 
             <section id="calendar" class="content-section">
-                <h2><i class="ph-calendar"></i> Csillagászati Eseménynaptár (2026)</h2>
-                <div class="card">
-                    <p class="description">Jelentősebb csillagászati események 2026-ban. Add hozzá a naptáradhoz az alábbi gombbal, hogy ne maradj le semmiről!</p>
-                    <a href="data/events_2026.ics" class="button-primary" download="csillagasz_naptar_2026.ics"><i class="ph-download-simple"></i> .ICS Naptárfájl letöltése</a>
-                    <div id="calendar-preview">
-                        <h3>Előnézet</h3>
-                        <ul>
-                            <li><strong>Január 3-4:</strong> Quadrantidák meteorraj maximuma</li>
-                            <li><strong>Március 3:</strong> Teljes holdfogyatkozás (Magyarországról a vége látszik)</li>
-                            <li><strong>Március 20:</strong> Tavaszi napéjegyenlőség</li>
-                            <li><strong>Április 22-23:</strong> Lyridák meteorraj maximuma</li>
-                            <li><strong>Május 6-7:</strong> Eta Aquaridák meteorraj maximuma</li>
-                            <li><strong>Június 21:</strong> Nyári napforduló</li>
-                            <li><strong>Augusztus 12:</strong> Részleges napfogyatkozás (Izlandon és Spanyolországban teljes)</li>
-                            <li><strong>Augusztus 12-13:</strong> Perseidák meteorraj maximuma</li>
-                            <li><strong>Augusztus 28:</strong> Részleges holdfogyatkozás</li>
-                            <li><strong>Szeptember 22:</strong> Őszi napéjegyenlőség</li>
-                            <li><strong>Október 21-22:</strong> Orionidák meteorraj maximuma</li>
-                            <li><strong>November 17-18:</strong> Leonidák meteorraj maximuma</li>
-                            <li><strong>December 13-14:</strong> Geminidák meteorraj maximuma</li>
-                            <li><strong>December 21:</strong> Téli napforduló</li>
-                        </ul>
+                <h2><i class="ph-calendar"></i> Csillagászati Eseménynaptár</h2>
+                 <div class="card">
+                    <div id="calendar-controls">
+                        <button id="prev-month"><i class="ph ph-caret-left"></i></button>
+                        <h3 id="calendar-month-year"></h3>
+                        <button id="next-month"><i class="ph ph-caret-right"></i></button>
+                    </div>
+                    <div id="calendar-grid"></div>
+                    <div id="calendar-legend"></div>
+                 </div>
+            </section>
+
+            <section id="wiki" class="content-section">
+                <h2><i class="ph-books"></i> Tudástár</h2>
+                <div class="accordion">
+                    <button class="accordion-header">
+                        <h3>Távcsőtípusok</h3>
+                        <i class="ph ph-caret-down accordion-icon"></i>
+                    </button>
+                    <div class="accordion-content">
+                        <p>A csillagászati távcsöveknek két fő típusa van: a lencsés (refraktor) és a tükrös (reflektor)....</p>
+                    </div>
+                </div>
+                <div class="accordion">
+                    <button class="accordion-header">
+                        <h3>Mechanikák és Állványok</h3>
+                        <i class="ph ph-caret-down accordion-icon"></i>
+                    </button>
+                    <div class="accordion-content">
+                        <p>A mechanika feladata a távcső stabil tartása és precíz mozgatása. Két fő fajtája az azimutális és az ekvatoriális mechanika....</p>
+                    </div>
+                </div>
+                 <div class="accordion">
+                    <button class="accordion-header">
+                        <h3>Okulárok és Kiegészítők</h3>
+                        <i class="ph ph-caret-down accordion-icon"></i>
+                    </button>
+                    <div class="accordion-content">
+                        <p>Az okulár a távcső "szemlencséje", ezen keresztül nézünk bele. Fő jellemzője a fókusztávolsága, ami meghatározza a nagyítást....</p>
                     </div>
                 </div>
             </section>
+
         </main>
 
         <footer>
-            <p>Készült szeretettel magyar csillagászoknak. | Javaslatok, ötletek: [email címed] </p>
+            <p>Készült szeretettel magyar csillagászoknak. | <span id="app-version"></span></p>
         </footer>
     </div>
     <div id="formula-tooltip" class="formula-tooltip" style="display: none;"></div>
