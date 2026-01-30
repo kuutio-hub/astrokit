@@ -216,12 +216,12 @@ function updateMoonVisual(canvas, fraction, phase) {
     litGradient.addColorStop(0.7, '#e0e0e0');
     litGradient.addColorStop(1, '#c0c0c0');
 
-    const darkGradient = ctx.createRadialGradient(r * 1.3, r * 1.3, r, r, r*2);
+    const darkGradient = ctx.createRadialGradient(r * 1.3, r * 1.3, r, r, r, r * 2);
     darkGradient.addColorStop(0, '#3a3a3a');
     darkGradient.addColorStop(0.5, '#2c2c2c');
     darkGradient.addColorStop(1, '#1a1a1a');
 
-    const earthshineGradient = ctx.createRadialGradient(r, r, r*0.8, r, r, r);
+    const earthshineGradient = ctx.createRadialGradient(r, r, r * 0.8, r, r, r);
     earthshineGradient.addColorStop(0, '#282c34');
     earthshineGradient.addColorStop(1, '#1a1d22');
 
