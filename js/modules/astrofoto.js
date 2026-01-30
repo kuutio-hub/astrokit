@@ -1,110 +1,116 @@
 
 import { cameras } from '../data/cameras.js';
 import { objects } from '../data/objects.js';
+import { isoRecommendations } from '../data/iso_recommendations.js';
 
 const $ = (selector) => document.querySelector(selector);
-
-let gearSettings = {};
+let currentGear = {};
 
 export function initAstrofotoHelper() {
-    setupExposureCalculator();
     setupFovSimulator();
+    setupEventListeners();
     
-    // Listen for global gear updates
     document.addEventListener('gearUpdated', (e) => {
-        gearSettings = e.detail;
-        updateFovInputs();
+        currentGear = e.detail;
+        updateAstrofotoCalculations();
     });
+
+    // Initial calculation
+    setTimeout(() => {
+        const cameraIndex = $('#cameraSelect').value || 0;
+        currentGear = {
+            ...currentGear,
+            teleFocalLength: parseFloat($('#main-gear-form').elements.teleFocalLength.value),
+            teleAperture: parseFloat($('#main-gear-form').elements.teleAperture.value),
+            cameraIndex: parseInt(cameraIndex),
+            pixelSize: cameras[cameraIndex].pixel_size
+        };
+        updateAstrofotoCalculations();
+    }, 100);
 }
 
-function setupExposureCalculator() {
-    const form = $('#calc-exposure');
-    if (!form) return;
-    
-    const focalLengthInput = $('#exp-focal-length');
-    const cropFactorSelect = $('#exp-sensor-crop');
-    const result500Span = $('#exp-result-500');
-    // NPF rule needs more data (aperture, pixel size) - we can get it from gearSettings later
-    // For now, it's a placeholder.
+function setupEventListeners() {
+    $('#astrophoto-form').addEventListener('input', updateAstrofotoCalculations);
+}
 
-    const calculate = () => {
-        const focalLength = parseFloat(focalLengthInput.value);
-        const cropFactor = parseFloat(cropFactorSelect.value);
-        
-        if (focalLength > 0 && cropFactor > 0) {
-            const effectiveFocalLength = focalLength * cropFactor;
-            const maxExposure500 = 500 / effectiveFocalLength;
-            result500Span.textContent = `${maxExposure500.toFixed(2)} s`;
-        }
-    };
+function updateAstrofotoCalculations() {
+    const scenario = $('#photo-scenario').value;
+    const focalLength = parseFloat($('#ap-focal-length').value);
+    const aperture = parseFloat($('#ap-aperture').value);
+    const lightPollution = $('#ap-light-pollution').value;
+    const { pixelSize } = currentGear;
     
-    form.addEventListener('input', calculate);
-    calculate();
+    // --- Exposure Time Calculation ---
+    let exposureTime = 0;
+    let exposureRule = '';
+
+    if (scenario === 'tripod') {
+        // Simplified NPF Rule: t = (35A + 30p) / f
+        // A = aperture f-number, p = pixel pitch, f = focal length
+        if (focalLength > 0 && pixelSize > 0 && aperture > 0) {
+            exposureTime = (35 * aperture + 30 * pixelSize) / focalLength;
+        }
+        exposureRule = 'NPF Szabály alapján';
+    } else { // piggyback or primefocus
+        exposureTime = '30 - 300'; // Suggest a range for tracked shots
+        exposureRule = 'Követéstől és témától függ';
+    }
+    
+    $('#res-exposure-time').textContent = typeof exposureTime === 'number' 
+        ? `${exposureTime.toFixed(1)} s` 
+        : `${exposureTime} s`;
+    $('#res-exposure-rule').textContent = exposureRule;
+
+    // --- ISO Recommendation ---
+    const recommendation = isoRecommendations.find(rec => {
+        const [min, max] = rec.f_ratio.split('-').map(f => parseFloat(f.replace('f/','')));
+        return aperture >= min && aperture <= max && rec.pollution === lightPollution;
+    });
+    $('#res-iso-range').textContent = recommendation ? `ISO ${recommendation.iso}` : 'N/A';
+    
+    // --- Trigger FOV redraw ---
+    drawFov();
 }
 
 function setupFovSimulator() {
-    const form = $('#fov-form');
-    const cameraSelect = form.elements.fovCamera;
-    const objectSelect = form.elements.fovObject;
+    const objectSelect = $('#fov-form').elements.fovObject;
     
-    // Populate dropdowns
-    cameras.forEach((cam, index) => {
-        const option = new Option(`${cam.name} (${cam.sensor})`, index);
-        cameraSelect.add(option);
-    });
     objects.forEach((obj, index) => {
         const option = new Option(obj.name, index);
         objectSelect.add(option);
     });
 
-    form.addEventListener('input', drawFov);
-    
-    // Initial draw
-    updateFovInputs();
-    drawFov();
-}
-
-function updateFovInputs() {
-    const fovFocalInput = $('#fov-form').elements.fovFocalLength;
-    if (gearSettings.teleFocalLength) {
-        fovFocalInput.value = gearSettings.teleFocalLength;
-    }
-    drawFov();
+    $('#fov-form').addEventListener('input', drawFov);
 }
 
 function drawFov() {
-    const form = $('#fov-form');
-    const focalLength = parseFloat(form.elements.fovFocalLength.value);
-    const selectedCamera = cameras[form.elements.fovCamera.value];
-    const selectedObject = objects[form.elements.fovObject.value];
+    const focalLength = parseFloat($('#ap-focal-length').value);
+    const selectedCamera = cameras[currentGear.cameraIndex || 0];
+    const selectedObject = objects[$('#fov-form').elements.fovObject.value];
+
+    if (!focalLength || !selectedCamera || !selectedObject) return;
 
     const canvas = $('#fov-canvas');
     const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
+    const { width, height } = canvas;
 
-    // Calculate FOV in degrees
     const fovWidthDeg = 2 * Math.atan(selectedCamera.width_mm / (2 * focalLength)) * (180 / Math.PI);
     const fovHeightDeg = 2 * Math.atan(selectedCamera.height_mm / (2 * focalLength)) * (180 / Math.PI);
 
-    // Determine scale (pixels per degree)
     const padding = 10;
     const maxDim = Math.max(fovWidthDeg, fovHeightDeg, selectedObject.width_deg, selectedObject.height_deg);
     const scale = (Math.min(width, height) - 2 * padding) / maxDim;
 
-    // Clear and setup canvas
     const styles = getComputedStyle(document.body);
     ctx.fillStyle = styles.getPropertyValue('--bg-color').trim();
     ctx.fillRect(0, 0, width, height);
 
-    // Draw FOV rectangle
     const fovRectWidth = fovWidthDeg * scale;
     const fovRectHeight = fovHeightDeg * scale;
     ctx.strokeStyle = styles.getPropertyValue('--accent-color').trim();
     ctx.lineWidth = 2;
     ctx.strokeRect((width - fovRectWidth) / 2, (height - fovRectHeight) / 2, fovRectWidth, fovRectHeight);
 
-    // Draw Object
     const objWidth = selectedObject.width_deg * scale;
     const objHeight = selectedObject.height_deg * scale;
     ctx.fillStyle = styles.getPropertyValue('--text-secondary-color').trim();
@@ -113,11 +119,10 @@ function drawFov() {
         ctx.beginPath();
         ctx.ellipse(width / 2, height / 2, objWidth / 2, objHeight / 2, 0, 0, 2 * Math.PI);
         ctx.fill();
-    } else { // rectangle (for sun/moon)
+    } else {
         ctx.fillRect((width - objWidth) / 2, (height - objHeight) / 2, objWidth, objHeight);
     }
     ctx.globalAlpha = 1.0;
 
-    // Update info text
     $('#fov-info').innerHTML = `Látómező: ${fovWidthDeg.toFixed(2)}° x ${fovHeightDeg.toFixed(2)}°`;
 }

@@ -6,8 +6,9 @@ import { initCalculators } from './modules/calculators.js';
 import { initAstrofotoHelper } from './modules/astrofoto.js';
 import { initAnalemma } from './modules/analemma.js';
 import { initCalendar } from './modules/calendar.js';
+import { initWiki } from './modules/wiki.js';
 
-const APP_VERSION = 'v1.3.0';
+const APP_VERSION = 'v1.4.0';
 
 document.addEventListener('DOMContentLoaded', async () => {
     displayVersion();
@@ -17,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initCalculators();
     initAstrofotoHelper();
     initCalendar();
+    initWiki();
 
     try {
         const coords = await getUserLocation();
@@ -47,30 +49,44 @@ function displayVersion() {
 function setupNavigation() {
     const navItems = document.querySelectorAll('.nav-item');
     const contentSections = document.querySelectorAll('.content-section');
+    const menuToggle = document.getElementById('menu-toggle');
+    const nav = document.getElementById('main-nav');
 
+    const activateTab = (targetId) => {
+        navItems.forEach(i => i.classList.remove('active'));
+        contentSections.forEach(s => s.classList.remove('active'));
+
+        const activeItem = document.querySelector(`.nav-item[data-target="${targetId}"]`);
+        if(activeItem) activeItem.classList.add('active');
+        
+        document.getElementById(targetId)?.classList.add('active');
+        window.location.hash = targetId;
+
+        // Close mobile menu on navigation
+        nav.classList.remove('active');
+        menuToggle.querySelector('i').className = 'ph ph-list';
+    };
+    
     navItems.forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
-            
-            navItems.forEach(i => i.classList.remove('active'));
-            contentSections.forEach(s => s.classList.remove('active'));
-
-            item.classList.add('active');
             const targetId = item.getAttribute('data-target');
-            document.getElementById(targetId).classList.add('active');
-            window.location.hash = targetId;
+            activateTab(targetId);
         });
     });
-    
-    const currentHash = window.location.hash.substring(1);
-    if (currentHash) {
-        const targetNavItem = document.querySelector(`.nav-item[data-target="${currentHash}"]`);
-        if (targetNavItem) {
-            targetNavItem.click();
+
+    menuToggle.addEventListener('click', () => {
+        nav.classList.toggle('active');
+        const icon = menuToggle.querySelector('i');
+        if (nav.classList.contains('active')) {
+            icon.className = 'ph ph-x';
+        } else {
+            icon.className = 'ph ph-list';
         }
-    } else {
-         document.querySelector('.nav-item[data-target="dashboard"]').click();
-    }
+    });
+    
+    const currentHash = window.location.hash.substring(1) || 'dashboard';
+    activateTab(currentHash);
 }
 
 function setupNightMode() {
@@ -97,6 +113,9 @@ function setupAccordions() {
     document.addEventListener('click', (e) => {
         const header = e.target.closest('.accordion-header');
         if (!header) return;
+
+        // Allow multiple accordions in wiki
+        if(header.closest('#wiki-container')) return;
 
         const accordion = header.parentElement;
         const content = header.nextElementSibling;

@@ -15,16 +15,19 @@
         <header>
             <div class="title-container">
                 <h1><i class="ph-shooting-star"></i> Amatőrcsillagász Svájci Bicska</h1>
-                <p>Helyi adatok, kalkulátorok és segédletek egy helyen</p>
+                <p class="desktop-only">Helyi adatok, kalkulátorok és segédletek egy helyen</p>
             </div>
             <div class="controls">
                 <button id="night-mode-toggle" class="icon-button" aria-label="Éjszakai mód kapcsolója">
                     <i class="ph ph-moon"></i>
                 </button>
+                <button id="menu-toggle" class="icon-button mobile-only" aria-label="Menü megnyitása">
+                    <i class="ph ph-list"></i>
+                </button>
             </div>
         </header>
 
-        <nav>
+        <nav id="main-nav">
             <a href="#dashboard" class="nav-item active" data-target="dashboard"><i class="ph-gauge"></i> Műszerfal</a>
             <a href="#calculators" class="nav-item" data-target="calculators"><i class="ph-calculator"></i> Kalkulátorok</a>
             <a href="#astrophoto" class="nav-item" data-target="astrophoto"><i class="ph-camera"></i> Asztrofotó</a>
@@ -56,13 +59,13 @@
                         <i class="ph ph-caret-down accordion-icon"></i>
                     </button>
                     <div class="accordion-content active" style="max-height: fit-content; padding: 1.5rem;">
-                        <p class="description">Add meg itt a felszerelésed adatait. Ezek az értékek automatikusan kitöltik a megfelelő mezőket, de a számításoknál felülírhatod őket.</p>
+                        <p class="description">Add meg itt a felszerelésed adatait. Ezek az értékek automatikusan frissülnek a többi modulban.</p>
                         <form id="main-gear-form" class="form-grid">
                              <div><label>Távcső fókusztávolsága (mm): <input type="number" name="teleFocalLength" value="1000"></label></div>
                              <div><label>Távcső átmérője (mm): <input type="number" name="teleAperture" value="120"></label></div>
                              <div><label>Okulár fókusztávolsága (mm): <input type="number" name="eyeFocalLength" value="10"></label></div>
                              <div><label>Okulár látómezeje (°): <input type="number" name="eyeAFOV" value="52"></label></div>
-                             <div><label>Kamera pixelmérete (μm): <input type="number" name="pixelSize" value="3.76"></label></div>
+                             <div><label>Kamera: <select name="cameraSelect" id="cameraSelect"></select></label></div>
                         </form>
                     </div>
                 </div>
@@ -85,36 +88,55 @@
 
             <section id="astrophoto" class="content-section">
                 <h2><i class="ph-camera"></i> Asztrofotós Segédlet</h2>
-                <div class="astrophoto-grid">
+                <div class="astrophoto-setup">
                     <div class="card">
-                        <h3>Maximális Expozíciós Idő</h3>
-                        <p class="description">Becslés a csillagok bemozdulásmentes fotózásához álló állványról (követés nélkül).</p>
-                        <form id="calc-exposure">
-                             <label>Objektív fókusztávolsága (mm): <input type="number" id="exp-focal-length" value="50" required></label>
-                             <label>Szenzor típusa: 
-                                 <select id="exp-sensor-crop">
-                                     <option value="1">Full Frame</option>
-                                     <option value="1.5" selected>APS-C (Nikon, Sony)</option>
-                                     <option value="1.6">APS-C (Canon)</option>
-                                     <option value="2">Mikro NégyHarmad</option>
-                                 </select>
-                             </label>
-                             <p class="result">500-as szabály: <span id="exp-result-500">6.67 s</span></p>
-                             <p class="result">NPF szabály (ajánlott): <span id="exp-result-npf">... s</span></p>
+                        <h3><i class="ph ph-gear"></i> 1. Forgatókönyv és Beállítások</h3>
+                        <form id="astrophoto-form">
+                            <label>Fotózási mód:
+                                <select id="photo-scenario">
+                                    <option value="tripod" selected>Csak kamera állványon (követés nélkül)</option>
+                                    <option value="piggyback">Kamera követő mechanikán (Piggyback)</option>
+                                    <option value="primefocus">Kamera primer fókuszban (követéssel)</option>
+                                </select>
+                            </label>
+                            <div class="form-grid-2">
+                                <div><label>Objektív fókusza (mm): <input type="number" id="ap-focal-length" value="50"></label></div>
+                                <div><label>Objektív rekesze (f/): <input type="number" id="ap-aperture" value="2.8" step="0.1"></label></div>
+                            </div>
+                             <label>Fényszennyezettség:
+                                <select id="ap-light-pollution">
+                                    <option value="rural">Vidéki ég (Bortle 1-4)</option>
+                                    <option value="suburban" selected>Elővárosi ég (Bortle 5-7)</option>
+                                    <option value="city">Városi ég (Bortle 8-9)</option>
+                                </select>
+                            </label>
                         </form>
                     </div>
                     <div class="card">
-                        <h3>Látómező Szimulátor</h3>
-                        <p class="description">Válaszd ki a felszerelésed és egy célpontot, hogy lásd, mi fér a képedbe.</p>
-                        <form id="fov-form" class="form-grid-2">
-                             <div><label>Fókusztávolság (mm): <input type="number" name="fovFocalLength" value="1000"></label></div>
-                             <div><label>Kamera: <select name="fovCamera"></select></label></div>
-                             <div><label>Célpont: <select name="fovObject"></select></label></div>
-                        </form>
-                        <div class="canvas-container fov-canvas-container">
-                             <canvas id="fov-canvas" width="400" height="300"></canvas>
-                             <div id="fov-info"></div>
+                        <h3><i class="ph ph-lightbulb"></i> 2. Eredmények és Javaslatok</h3>
+                        <div id="astrophoto-results">
+                            <div class="result-item">
+                                <h4><i class="ph ph-timer"></i> Max. expozíciós idő</h4>
+                                <p id="res-exposure-time" class="res-value">-- s</p>
+                                <p id="res-exposure-rule" class="res-desc">NPF Szabály alapján</p>
+                            </div>
+                            <div class="result-item">
+                                <h4><i class="ph ph-aperture"></i> Javasolt ISO tartomány</h4>
+                                <p id="res-iso-range" class="res-value">ISO ---- - ----</p>
+                                <p class="res-desc">Fényerő és fényszennyezés alapján</p>
+                            </div>
                         </div>
+                    </div>
+                </div>
+                 <div class="card">
+                    <h3><i class="ph ph-frame-corners"></i> 3. Látómező Szimulátor</h3>
+                    <p class="description">Válaszd ki a célpontot, hogy lásd, mi fér a képedbe az aktuális beállításokkal.</p>
+                    <form id="fov-form" class="form-grid-2">
+                         <div><label>Célpont: <select name="fovObject"></select></label></div>
+                    </form>
+                    <div class="canvas-container fov-canvas-container">
+                         <canvas id="fov-canvas" width="400" height="300"></canvas>
+                         <div id="fov-info"></div>
                     </div>
                 </div>
             </section>
@@ -122,9 +144,10 @@
             <section id="analemma" class="content-section">
                 <h2><i class="ph-sun-horizon"></i> Helyi Analemma</h2>
                 <div class="card">
-                    <p class="description">A Nap látszólagos helyzete az égen minden nap ugyanabban az időpontban (helyi dél) egy éven keresztül. A számítás automatikusan lefut a háttérben, az eredményt a böngésző elmenti a gyorsabb megjelenítés érdekében.</p>
+                    <p class="description">A Nap látszólagos helyzete az égen minden nap ugyanabban az időpontban (helyi dél) egy éven keresztül. A nevezetes pontok (napfordulók, napéjegyenlőségek) kiemelve.</p>
                     <div class="canvas-container">
                          <canvas id="analemma-canvas" width="600" height="400"></canvas>
+                         <div id="analemma-tooltip" class="formula-tooltip"></div>
                          <div id="analemma-loader" class="loader-container" style="display: none;">
                             <div class="loader"></div>
                             <p>Analemma számítása és mentése...</p>
@@ -148,33 +171,8 @@
 
             <section id="wiki" class="content-section">
                 <h2><i class="ph-books"></i> Tudástár</h2>
-                <div class="accordion">
-                    <button class="accordion-header">
-                        <h3>Távcsőtípusok</h3>
-                        <i class="ph ph-caret-down accordion-icon"></i>
-                    </button>
-                    <div class="accordion-content">
-                        <p>A csillagászati távcsöveknek két fő típusa van: a lencsés (refraktor) és a tükrös (reflektor)....</p>
-                    </div>
-                </div>
-                <div class="accordion">
-                    <button class="accordion-header">
-                        <h3>Mechanikák és Állványok</h3>
-                        <i class="ph ph-caret-down accordion-icon"></i>
-                    </button>
-                    <div class="accordion-content">
-                        <p>A mechanika feladata a távcső stabil tartása és precíz mozgatása. Két fő fajtája az azimutális és az ekvatoriális mechanika....</p>
-                    </div>
-                </div>
-                 <div class="accordion">
-                    <button class="accordion-header">
-                        <h3>Okulárok és Kiegészítők</h3>
-                        <i class="ph ph-caret-down accordion-icon"></i>
-                    </button>
-                    <div class="accordion-content">
-                        <p>Az okulár a távcső "szemlencséje", ezen keresztül nézünk bele. Fő jellemzője a fókusztávolsága, ami meghatározza a nagyítást....</p>
-                    </div>
-                </div>
+                <!-- Wiki accordions will be injected by JS -->
+                <div id="wiki-container"></div>
             </section>
 
         </main>

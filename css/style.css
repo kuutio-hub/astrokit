@@ -67,7 +67,7 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 2rem 1rem;
+    padding: 1.5rem 1rem;
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 1.5rem;
 }
@@ -77,9 +77,9 @@ header .title-container {
 }
 
 header h1 {
-    font-size: 2.5rem;
+    font-size: 2rem;
     color: var(--text-color);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -87,10 +87,16 @@ header h1 {
 
 header p {
     color: var(--text-secondary-color);
-    font-size: 1.1rem;
+    font-size: 1rem;
 }
 
-.controls .icon-button {
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.icon-button {
     background: none;
     border: 2px solid var(--border-color);
     color: var(--text-secondary-color);
@@ -105,7 +111,7 @@ header p {
     transition: all 0.2s ease;
 }
 
-.controls .icon-button:hover {
+.icon-button:hover {
     color: var(--accent-color);
     border-color: var(--accent-color);
 }
@@ -260,14 +266,12 @@ body.night-mode .moon-phase-visual {
     transform-origin: 100% 50%;
 }
 
-/* Waxing (Növekvő): a jobb oldali fekete félkör forog el, felfedve a holdat */
 .moon-phase-visual::before {
     transform: rotate(var(--moon-phase-waxing-angle));
     transition: transform 0.4s ease-out;
 }
-/* Waning (Fogyó): a bal oldali fekete félkör forog rá a holdra */
 .moon-phase-visual::after {
-    background-color: var(--moon-color); /* Fogyó fázisban ez a fényes félkör, ami eltakarja a sötétet */
+    background-color: var(--moon-color); 
     transform: rotate(var(--moon-phase-waning-angle));
     transition: transform 0.4s ease-out;
 }
@@ -313,10 +317,38 @@ body.night-mode .moon-phase-visual {
     font-size: 0.8rem; color: var(--text-secondary-color);
 }
 
-.astrophoto-grid {
+.astrophoto-setup {
     display: grid;
-    grid-template-columns: 1fr 1.5fr;
+    grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+#astrophoto-results {
+    display: flex;
+    gap: 1rem;
+    text-align: center;
+}
+.result-item {
+    flex: 1;
+    background: var(--bg-color);
+    padding: 1rem;
+    border-radius: 8px;
+}
+.result-item h4 {
+    color: var(--text-secondary-color);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+}
+.res-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--accent-color);
+}
+.res-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary-color);
 }
 
 .fov-canvas-container {
@@ -376,7 +408,9 @@ form .result span {
     box-shadow: 0 5px 15px var(--shadow-color);
     z-index: 100;
     max-width: 300px;
-    font-family: 'Courier New', Courier, monospace;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
 }
 
 /* Analemma & FOV Canvas */
@@ -496,6 +530,7 @@ form .result span {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    font-size: 1.1rem;
 }
 .accordion-icon {
     transition: transform 0.3s ease;
@@ -567,29 +602,54 @@ footer {
 }
 
 /* Responsive */
-@media (max-width: 900px) {
-    .astrophoto-grid {
-        grid-template-columns: 1fr;
-    }
+.mobile-only {
+    display: none !important;
 }
+
 @media (max-width: 768px) {
-    header {
-        flex-direction: column;
-        gap: 1rem;
-        text-align: center;
+    .desktop-only {
+        display: none;
     }
-    header .title-container {
-        text-align: center;
+    .mobile-only {
+        display: flex !important;
+    }
+
+    header {
+        padding: 1rem;
+        margin-bottom: 1rem;
     }
     header h1 {
-        font-size: 1.8rem;
-        justify-content: center;
+        font-size: 1.5rem;
     }
+    
     nav {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(13, 17, 23, 0.95);
         flex-direction: column;
-        align-items: stretch;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        z-index: 100;
+        transform: translateY(-100%);
+        transition: transform 0.3s ease-in-out;
+        padding: 0;
+    }
+    nav.active {
+        transform: translateY(0);
     }
     .nav-item {
-        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .thematic-results-grid, .astrophoto-setup {
+        grid-template-columns: 1fr;
+    }
+
+    .form-grid-2 {
+        grid-template-columns: 1fr;
     }
 }

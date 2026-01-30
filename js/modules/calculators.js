@@ -1,4 +1,6 @@
 
+import { cameras } from '../data/cameras.js';
+
 const GEAR_STORAGE_KEY = 'astroGearSettings';
 let gearSettings = {};
 
@@ -6,10 +8,20 @@ const $ = (selector, parent = document) => parent.querySelector(selector);
 
 // --- Main Initialization ---
 export function initCalculators() {
+    populateCameraSelect();
     loadGearSettings();
     setupMainGearForm();
     setupFormulaTooltips();
-    updateAllCalculations(); // Initial calculation
+    updateAllCalculations();
+}
+
+function populateCameraSelect() {
+    const select = $('#cameraSelect');
+    if (!select) return;
+    cameras.forEach((cam, index) => {
+        const option = new Option(cam.name, index);
+        select.add(option);
+    });
 }
 
 // --- Gear Management ---
@@ -20,7 +32,7 @@ function loadGearSettings() {
         teleAperture: 120,
         eyeFocalLength: 10,
         eyeAFOV: 52,
-        pixelSize: 3.76
+        cameraIndex: 0 // Default to the first camera in the list
     };
 }
 
@@ -32,20 +44,25 @@ function setupMainGearForm() {
     const form = $('#main-gear-form');
     if (!form) return;
 
-    for (const key in gearSettings) {
-        if (form.elements[key]) {
-            form.elements[key].value = gearSettings[key];
-        }
-    }
+    // Set initial values from loaded settings
+    form.elements.teleFocalLength.value = gearSettings.teleFocalLength;
+    form.elements.teleAperture.value = gearSettings.teleAperture;
+    form.elements.eyeFocalLength.value = gearSettings.eyeFocalLength;
+    form.elements.eyeAFOV.value = gearSettings.eyeAFOV;
+    form.elements.cameraSelect.value = gearSettings.cameraIndex;
 
     form.addEventListener('input', (e) => {
-        const key = e.target.name;
-        const value = parseFloat(e.target.value);
-        if (!isNaN(value)) {
-            gearSettings[key] = value;
-            saveGearSettings();
-            updateAllCalculations();
+        const name = e.target.name;
+        const value = e.target.type === 'number' ? parseFloat(e.target.value) : e.target.value;
+
+        if (name === 'cameraSelect') {
+            gearSettings.cameraIndex = parseInt(value, 10);
+        } else if (!isNaN(value)) {
+            gearSettings[name] = value;
         }
+
+        saveGearSettings();
+        updateAllCalculations();
     });
 }
 
@@ -61,21 +78,23 @@ function setupFormulaTooltips() {
             tooltip.style.left = `${rect.left + window.scrollX}px`;
             tooltip.style.top = `${rect.bottom + window.scrollY + 5}px`;
             tooltip.style.display = 'block';
+            tooltip.style.opacity = '1';
         } else {
             tooltip.style.display = 'none';
+            tooltip.style.opacity = '0';
         }
     });
 }
 
 // --- Calculation Logic ---
 function updateAllCalculations() {
-    const { teleFocalLength, teleAperture, eyeFocalLength, eyeAFOV, pixelSize } = gearSettings;
+    const selectedCamera = cameras[gearSettings.cameraIndex || 0];
+    const pixelSize = selectedCamera.pixel_size;
+    const { teleFocalLength, teleAperture, eyeFocalLength, eyeAFOV } = gearSettings;
 
-    // --- Intermediate Calculations ---
     const magnification = eyeFocalLength > 0 ? teleFocalLength / eyeFocalLength : 0;
     const focalRatio = teleAperture > 0 ? teleFocalLength / teleAperture : 0;
 
-    // --- Results Rendering ---
     const results = {
         optics: [
             { title: "Nagyítás", value: `${magnification.toFixed(1)}x`, inputs: `TFL: ${teleFocalLength}mm / EFL: ${eyeFocalLength}mm`, formula: "Távcső Fókusz / Okulár Fókusz" },
@@ -94,13 +113,11 @@ function updateAllCalculations() {
         ]
     };
 
-    // Render results into the DOM
     renderResults('results-optics', results.optics);
     renderResults('results-resolution', results.resolution);
     renderResults('results-ccd', results.ccd);
 
-    // Also update other modules that depend on these values
-    document.dispatchEvent(new CustomEvent('gearUpdated', { detail: gearSettings }));
+    document.dispatchEvent(new CustomEvent('gearUpdated', { detail: { ...gearSettings, pixelSize } }));
 }
 
 function renderResults(containerId, resultsArray) {
