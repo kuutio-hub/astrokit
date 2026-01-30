@@ -146,8 +146,10 @@ function updateMoonVisual(phase) {
     const visual = document.getElementById('moon-visual');
     if (!visual) return;
 
-    // phase: 0=new, 0.25=1st Q, 0.5=full, 0.75=3rd Q. Synodic month is ~29.53 days, we use 28 images.
-    const phaseIndex = Math.min(27, Math.floor(phase * 28));
+    // phase: 0=new, 0.25=1st Q, 0.5=full, 0.75=3rd Q. Synodic month is ~29.53 days.
+    // We have 28 images, so we map the phase (0 to 1) to an index (0 to 27).
+    // Rounding to the nearest index provides a better visual match than flooring.
+    const phaseIndex = Math.round(phase * 28) % 28;
     visual.innerHTML = moonPhaseSVGs[phaseIndex] || moonPhaseSVGs[0];
 }
 

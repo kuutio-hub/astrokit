@@ -47,25 +47,21 @@ const wikiContent = [
         `
     },
      {
-        title: "Égi Koordináta-rendszerek",
+        title: "Pólusra Állás",
         content: `
-            <p>Az égitestek helyének meghatározására különböző koordináta-rendszereket használunk.</p>
-            <ul>
-                <li><strong>Horizontális (Azimutális) Rendszer:</strong> Ez a helyi, megfigyelő-központú rendszer. A koordinátái:
-                    <ul>
-                        <li><em>Magasság (altitúdó):</em> Az objektum szögtávolsága a horizonttól, 0° (horizont) és 90° (zenit) között.</li>
-                        <li><em>Azimut:</em> Az égitest helye a horizont mentén, általában a déli ponttól mérve nyugat felé (0°-360°).</li>
-                    </ul>
-                    Ezek az értékek folyamatosan változnak a Föld forgása miatt, és függnek a megfigyelő helyétől. A távcsövek azimutális mechanikái ebben a rendszerben mozognak.
-                </li>
-                <li><strong>Ekvatoriális Rendszer:</strong> Ez egy éggömbhöz kötött rendszer, ami független a megfigyelő helyétől és az időtől (a precessziótól eltekintve). Koordinátái a földi szélesség és hosszúság égi megfelelői:
-                    <ul>
-                        <li><em>Rektaszcenzió (RA):</em> Az égi hosszúság, a tavaszponttól mérve kelet felé. Órában, percben és másodpercben mérik (0h - 24h).</li>
-                        <li><em>Deklináció (Dec):</em> Az égi szélesség, az égi egyenlítőtől mérve fokokban (+90° az Északi Égi Pólus, -90° a Déli).</li>
-                    </ul>
-                    Mivel a csillagok RA/Dec koordinátái (közel) állandóak, a csillagtérképek és a GoTo rendszerek ezt használják. Az ekvatoriális mechanikák ebben a rendszerben követik az eget.
-                </li>
-            </ul>
+            <h4>Miért fontos?</h4>
+            <p>Az ekvatoriális mechanikák lelke a precíz pólusra állás. Ez azt jelenti, hogy a mechanika Rektaszcenziós (RA) tengelyét pontosan a Föld forgástengelyével párhuzamosra állítjuk. Az északi féltekén ez a tengely az Északi Égi Pólusra (NCP) mutat, ami nagyon közel van a Sarkcsillaghoz (Polaris). Ha a pólusra állás pontos, a mechanikának elég csak az RA tengelyt mozgatnia, hogy tökéletesen kövesse a csillagokat, és kompenzálja a Föld forgását. Ez elengedhetetlen a hosszú expozíciós asztrofotózáshoz, ahol a csillagoknak tűéles pontoknak kell maradniuk.</p>
+            <h4>A Sarkcsillag nem a Pólus!</h4>
+            <p>Fontos tudni, hogy a Sarkcsillag nem pontosan az égi póluson van, hanem egy kicsit (kb. 0.65 fokkal) arrébb. Emiatt a pólus körül egy apró kört ír le 24 óra alatt. A precíz pólusra álláshoz tehát nem elég a Sarkcsillagot a pólustávcső közepébe állítani. Tudnunk kell, hogy a pólushoz képest éppen hol – melyik "óraállásnál" – tartózkodik.</p>
+            <h4>A Segédlet Használata</h4>
+            <p>Az alkalmazás <strong>Pólusra Állás segédlete</strong> ezt a pozíciót számolja ki valós időben a te helyzeted és a pontos idő alapján.</p>
+            <ol>
+                <li><strong>Előzetes beállítás:</strong> Állítsd fel a mechanikát, és egy iránytű vagy telefon segítségével durván állítsd észak felé. Állítsd be a mechanika pólusmagasság-skáláját a te földrajzi szélességednek megfelelő értékre.</li>
+                <li><strong>Nyisd meg a segédletet:</strong> Az appban a diagram megmutatja a pólustávcsőben látott kép szimulációját. A középső kereszt az Északi Égi Pólus (NCP). A kis kör a Sarkcsillag (Polaris) aktuális helyzete.</li>
+                <li><strong>Azonosítsd a pozíciót:</strong> Nézz bele a pólustávcsövedbe. A benne lévő szálkereszt (reticle) általában tartalmaz egy kis kört a Sarkcsillag számára.</li>
+                <li><strong>Igazítás:</strong> A mechanika magassági és oldalszög-finomállító csavarjaival mozgasd a teljes mechanikát addig, amíg a Sarkcsillag a pólustávcsőben ugyanabba a pozícióba nem kerül, mint amit a segédlet mutat. Például, ha a segédlet szerint a Polaris a 4 óránál van, akkor a pólustávcsőben is a kis körön, a 4 órának megfelelő helyre kell állítanod.</li>
+            </ol>
+            <p>Ha ez kész, a mechanikád készen áll a pontos követésre!</p>
         `
     },
     {

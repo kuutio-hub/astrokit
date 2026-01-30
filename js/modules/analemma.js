@@ -109,10 +109,15 @@ function drawAnalemma(canvas, sunPositions) {
     const altRange = maxAlt - minAlt;
 
     const azValues = sunPositions.map(p => p.azimuth);
-    const maxAbsAz = Math.max(...azValues.map(az => Math.abs(az - 180)));
-    const azRange = maxAbsAz * 2;
+    const minAz = Math.min(...azValues);
+    const maxAz = Math.max(...azValues);
+    const azRange = maxAz - minAz;
+
+    const horizontalExaggeration = 4;
     
-    const degPerPixel = Math.max(azRange / plotWidth, altRange / plotHeight);
+    const scaleY = plotHeight / altRange;
+    const scaleX = plotWidth / (azRange * horizontalExaggeration);
+
 
     const specialPoints = [
         { day: 0, label: 'Téli napforduló', color: '#58a6ff' },
@@ -126,10 +131,8 @@ function drawAnalemma(canvas, sunPositions) {
     const todayPos = sunPositions[todayIndex];
 
     const getCanvasCoords = (pos) => {
-        const centerX = padding + plotWidth / 2;
-        const centerY = padding + plotHeight / 2;
-        const x = centerX + ((pos.azimuth - 180) / degPerPixel);
-        const y = centerY - ((pos.altitude - (minAlt + altRange / 2)) / degPerPixel);
+        const x = padding + ((pos.azimuth - minAz) * scaleX * horizontalExaggeration);
+        const y = height - padding - ((pos.altitude - minAlt) * scaleY);
         return { x, y };
     };
 

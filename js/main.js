@@ -7,8 +7,9 @@ import { initAstrofotoHelper } from './modules/astrofoto.js';
 import { initAnalemma } from './modules/analemma.js';
 import { initCalendar } from './modules/calendar.js';
 import { initWiki } from './modules/wiki.js';
+import { initPolarAlign, stopPolarAlignAnimation } from './modules/polar_align.js';
 
-const APP_VERSION = 'v0.7.0';
+const APP_VERSION = 'v0.8.0';
 
 document.addEventListener('DOMContentLoaded', async () => {
     displayVersion();
@@ -29,9 +30,17 @@ document.addEventListener('DOMContentLoaded', async () => {
            initAnalemma(coords.latitude, coords.longitude);
         }, { once: true });
 
+        document.querySelector('.nav-item[data-target="polar-align"]').addEventListener('click', () => {
+           initPolarAlign(coords.latitude, coords.longitude);
+        });
+
         if(window.location.hash === '#analemma') {
             initAnalemma(coords.latitude, coords.longitude);
         }
+        if(window.location.hash === '#polar-align') {
+            initPolarAlign(coords.latitude, coords.longitude);
+        }
+
 
         hideLoader();
     } catch (error) {
@@ -54,6 +63,9 @@ function setupNavigation() {
     const nav = document.getElementById('main-nav');
 
     const activateTab = (targetId) => {
+        // Stop any running animations on other tabs
+        stopPolarAlignAnimation();
+
         navItems.forEach(i => i.classList.remove('active'));
         contentSections.forEach(s => s.classList.remove('active'));
 
