@@ -192,10 +192,17 @@
             </section>
 
             <section id="analemma" class="content-section">
-                <h2><i class="ph-sun-horizon"></i> Helyi Analemma</h2>
                 <div class="card">
+                    <div class="analemma-header">
+                        <h2><i class="ph-sun-horizon"></i> Helyi Analemma</h2>
+                        <div class="analemma-controls">
+                            <label for="analemma-time">Időpont:</label>
+                            <input type="range" id="analemma-time" min="6" max="18" value="12" step="0.5">
+                            <span id="analemma-time-display">12:00</span>
+                        </div>
+                    </div>
                     <p class="description">
-                        Az analemma a Nap pozícióját mutatja az év minden napján, <strong>mindig ugyanabban az időpontban</strong>. Esetünkben ez a helyi dél, amikor a Nap a legmagasabban jár az égen. Ez a "déli analemma" a tudományos és csillagászati standard ábrázolás. Fontos tudni, hogy ha más időpontot választanánk (pl. minden nap délután 3-kor), a görbe alakja az Időegyenlet hatása miatt más lenne.
+                        Az analemma a Nap égi pozícióját mutatja az év minden napján, a kiválasztott időpontban. A csúszkával változtathatod az időpontot, és megfigyelheted, hogyan dől és változik a görbe alakja. A klasszikus, álló "nyolcas" a helyi dél (kb. 12:00) idején látható.
                     </p>
                     <div class="canvas-container">
                          <canvas id="analemma-canvas" width="600" height="400"></canvas>
@@ -234,6 +241,14 @@
             <p>Készült szeretettel magyar csillagászoknak. | <span id="app-version"></span></p>
         </footer>
     </div>
+    
+    <div id="app-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <button id="modal-close" class="modal-close-btn"><i class="ph ph-x"></i></button>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
     <div id="info-tooltip" class="info-tooltip" style="display: none;"></div>
     <script type="module" src="js/main.js"></script>
 </body>
