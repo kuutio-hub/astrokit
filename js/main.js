@@ -10,7 +10,7 @@ import { initWiki } from './modules/wiki.js';
 import { initPolarAlign, stopPolarAlignAnimation } from './modules/polar_align.js';
 import { initPlanner } from './modules/planner.js';
 
-const APP_VERSION = 'v1.0.0';
+const APP_VERSION = 'v0.9.5';
 
 document.addEventListener('DOMContentLoaded', async () => {
     displayVersion();

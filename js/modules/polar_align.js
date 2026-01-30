@@ -32,34 +32,39 @@ function drawPolarScope(canvas, lst) {
     const textColorStrong = styles.getPropertyValue('--text-color').trim();
 
     const polarisRA = 2.5303; 
-    const polarisDistFraction = 0.8; // Zoom in for better visibility
+    const polarisDistFraction = 0.8;
 
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, width, height);
 
-    // Draw hour markers and ticks
+    // Draw outer ticks
     ctx.strokeStyle = lineLightColor;
-    for (let i = 0; i < 24; i++) {
-        const angle = toRad(i * 15 - 90);
-        const isMajorHour = i % 6 === 0;
-        const tickStart = radius * (isMajorHour ? 0.95 : 0.98);
-        const tickEnd = radius;
+    for (let i = 0; i < 60 * 12; i++) { // Ticks every 10 minutes (72 total)
+        const angle = toRad(i * 0.5 - 90); // 360 degrees / 720 ticks
+        const isHour = i % 60 === 0;
+        const isHalfHour = i % 30 === 0;
         
+        let tickStart;
+        if (isHour) tickStart = radius * 0.92;
+        else if (isHalfHour) tickStart = radius * 0.95;
+        else tickStart = radius * 0.98;
+
         ctx.beginPath();
         ctx.moveTo(center.x + Math.cos(angle) * tickStart, center.y + Math.sin(angle) * tickStart);
-        ctx.lineTo(center.x + Math.cos(angle) * tickEnd, center.y + Math.sin(angle) * tickEnd);
+        ctx.lineTo(center.x + Math.cos(angle) * radius, center.y + Math.sin(angle) * radius);
         ctx.stroke();
 
-        if (isMajorHour) {
+        if (isHour) {
             ctx.fillStyle = textColorStrong;
             ctx.font = '16px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             const textX = center.x + Math.cos(angle) * (radius - 20);
             const textY = center.y + Math.sin(angle) * (radius - 20);
-            ctx.fillText(i, textX, textY);
+            ctx.fillText(i/30, textX, textY);
         }
     }
+
 
     // Draw crosshairs for NCP
     ctx.beginPath();
@@ -71,7 +76,6 @@ function drawPolarScope(canvas, lst) {
     ctx.strokeStyle = textColor;
     ctx.stroke();
 
-
     const hourAngle = (lst - polarisRA) * 15;
     const angleRad = toRad(hourAngle) - Math.PI / 2;
     
@@ -80,30 +84,11 @@ function drawPolarScope(canvas, lst) {
         y: center.y + Math.sin(angleRad) * radius * polarisDistFraction
     };
 
-    // Draw Polaris path circle with hour ticks
-    ctx.strokeStyle = lineLightColor;
+    // Draw Polaris path circle
     ctx.setLineDash([2, 4]);
     ctx.beginPath();
     ctx.arc(center.x, center.y, radius * polarisDistFraction, 0, 2 * Math.PI);
     ctx.stroke();
-    
-    for (let i = 0; i < 24; i++) {
-        const angle = toRad(i * 15 - 90);
-        const isMajor = i % 3 === 0;
-        const tickLength = isMajor ? 8 : 4;
-        const pathRadius = radius * polarisDistFraction;
-        ctx.beginPath();
-        ctx.moveTo(
-            center.x + Math.cos(angle) * pathRadius,
-            center.y + Math.sin(angle) * pathRadius
-        );
-        ctx.lineTo(
-            center.x + Math.cos(angle) * (pathRadius - tickLength),
-            center.y + Math.sin(angle) * (pathRadius - tickLength)
-        );
-        ctx.stroke();
-    }
-    
     ctx.setLineDash([]);
     
     // Draw Polaris
@@ -114,7 +99,6 @@ function drawPolarScope(canvas, lst) {
     ctx.strokeStyle = bgColor;
     ctx.lineWidth = 1.5;
     ctx.stroke();
-
 
     const infoEl = document.getElementById('polar-align-info');
     if (infoEl) {

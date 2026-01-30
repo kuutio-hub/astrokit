@@ -143,52 +143,62 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
 function updateMoonVisual(canvas, phase) {
     const ctx = canvas.getContext('2d');
     const { width, height } = canvas;
-    const center = { x: width / 2, y: height / 2 };
+    const center = width / 2;
     const radius = width / 2 - 1;
 
-    // phase: 0=new, 0.25=1st Q, 0.5=full, 0.75=3rd Q
-    
-    // Clear canvas
     ctx.clearRect(0, 0, width, height);
-    
-    // Draw earthshine (dark part)
-    ctx.beginPath();
-    ctx.arc(center.x, center.y, radius, 0, 2 * Math.PI);
-    ctx.fillStyle = '#33373D';
-    ctx.fill();
 
-    // Draw lit part
-    const angle = (phase - 0.25) * 2 * Math.PI; // Angle of the sun
-    const terminatorX = center.x - Math.cos(angle) * radius;
-    const terminatorY = center.y - Math.sin(angle) * radius;
+    // Common styles
+    const litGradient = ctx.createRadialGradient(center - radius / 2, center, 0, center, center, radius * 1.5);
+    litGradient.addColorStop(0, '#f8f8f8');
+    litGradient.addColorStop(1, '#c0c0c0');
 
-    ctx.beginPath();
-    ctx.arc(center.x, center.y, radius, 0, 2 * Math.PI);
-    ctx.save();
-    ctx.clip(); // Clip to the circle
+    const darkGradient = ctx.createRadialGradient(center + radius / 2, center, 0, center, center, radius * 1.5);
+    darkGradient.addColorStop(0, '#4a4a4a');
+    darkGradient.addColorStop(1, '#2c2c2c');
 
-    if (phase <= 0.5) { // Waxing
-        ctx.beginPath();
-        ctx.rect(terminatorX, 0, width, height);
-    } else { // Waning
-         ctx.beginPath();
-         ctx.rect(0, 0, terminatorX, height);
+    // Draw the full circle with the appropriate base color
+    if (phase < 0.5) { // Waxing, starts dark
+        ctx.fillStyle = darkGradient;
+    } else { // Waning, starts lit
+        ctx.fillStyle = litGradient;
     }
-
-    ctx.fillStyle = '#f0f0f0';
-    ctx.fill();
-
     ctx.beginPath();
-    ctx.ellipse(
-        center.x,
-        center.y,
-        radius,
-        Math.abs(radius * Math.cos(phase * 2 * Math.PI)),
-        -angle,
-        0, 2*Math.PI
-    );
+    ctx.arc(center, center, radius, 0, 2 * Math.PI);
     ctx.fill();
-    ctx.restore();
+
+    // Determine the shape of the overlay
+    const phaseAngle = phase * 2 * Math.PI;
+    const terminatorAngle = Math.cos(phaseAngle);
+    const eclipseWidth = radius * terminatorAngle;
+
+    ctx.fillStyle = (phase < 0.5) ? litGradient : darkGradient;
+    
+    if (phase < 0.25 || phase > 0.75) { // Crescent
+        // Draw the other full half
+        ctx.beginPath();
+        const startAngle = -Math.PI / 2;
+        const endAngle = Math.PI / 2;
+        ctx.arc(center, center, radius, startAngle, endAngle, phase > 0.5);
+        ctx.fill();
+        
+        // Draw the terminator ellipse
+        ctx.beginPath();
+        ctx.ellipse(center, center, Math.abs(eclipseWidth), radius, 0, startAngle, endAngle, phase > 0.5);
+        ctx.fill();
+    } else { // Gibbous
+        // Draw the main half
+        ctx.beginPath();
+        const startAngle = Math.PI / 2;
+        const endAngle = -Math.PI / 2;
+        ctx.arc(center, center, radius, startAngle, endAngle, phase > 0.5);
+        ctx.fill();
+
+        // Draw the terminator ellipse
+        ctx.beginPath();
+        ctx.ellipse(center, center, Math.abs(eclipseWidth), radius, 0, startAngle, endAngle, phase < 0.5);
+        ctx.fill();
+    }
 }
 
 
