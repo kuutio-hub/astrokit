@@ -225,13 +225,13 @@ function updateMoonVisual(canvas, fraction, phase) {
     earthshineGradient.addColorStop(0, '#282c34');
     earthshineGradient.addColorStop(1, '#1a1d22');
 
-    // --- Draw Earthshine (faintly visible dark side) ---
+    // --- 1. Draw Earthshine Base ---
     ctx.fillStyle = earthshineGradient;
     ctx.beginPath();
     ctx.arc(r, r, r, 0, 2 * Math.PI);
     ctx.fill();
 
-    // --- Draw Maria and Craters on the dark side ---
+    // --- 2. Draw Maria and Craters on the dark side ---
     ctx.save();
     ctx.beginPath();
     ctx.arc(r, r, r, 0, 2 * Math.PI);
@@ -240,13 +240,13 @@ function updateMoonVisual(canvas, fraction, phase) {
     drawCraters(ctx, r, isAlwaysTrue, 0.4);
     ctx.restore();
 
-    // --- Draw Base Lit Moon ---
+    // --- 3. Draw Base Lit Moon ---
     ctx.fillStyle = litGradient;
     ctx.beginPath();
     ctx.arc(r, r, r, 0, 2 * Math.PI);
     ctx.fill();
     
-    // --- Draw Maria and Craters on the lit side ---
+    // --- 4. Draw Maria and Craters on the lit side ---
     ctx.save();
     ctx.beginPath();
     ctx.arc(r, r, r, 0, 2 * Math.PI);
@@ -255,30 +255,31 @@ function updateMoonVisual(canvas, fraction, phase) {
     drawCraters(ctx, r, isLitCheck, 1.0);
     ctx.restore();
     
-    // --- Draw Terminator Shadow ---
-    const terminatorAngle = (1 - fraction) * Math.PI;
-    const terminatorX = r - Math.cos(terminatorAngle) * r;
-    const terminatorRx = Math.abs(r - terminatorX);
-    
+    // --- 5. Draw Terminator Shadow ---
     ctx.fillStyle = darkGradient;
-    ctx.globalCompositeOperation = 'source-atop';
+    ctx.globalCompositeOperation = 'source-atop'; // Draw shadow only on top of the lit circle
 
-    if (fraction > 0.01 && fraction < 0.99) {
+    // This signed value determines the shape and direction of the terminator
+    const terminatorRx_signed = r * Math.cos(phase * 2 * Math.PI);
+
+    if (fraction > 0.005 && fraction < 0.995) { // Add a small tolerance
         ctx.beginPath();
-        if (phase < 0.5) { // Waxing (light on right, shadow on left)
-            ctx.arc(r, r, r, Math.PI / 2, -Math.PI / 2, true);
-            ctx.ellipse(r, r, terminatorRx, r, 0, -Math.PI / 2, Math.PI / 2, false);
-        } else { // Waning (light on left, shadow on right)
-            ctx.arc(r, r, r, -Math.PI / 2, Math.PI / 2, true);
-            ctx.ellipse(r, r, terminatorRx, r, 0, Math.PI / 2, -Math.PI / 2, false);
+        if (phase <= 0.5) { // Waxing (shadow on left)
+            ctx.arc(r, r, r, Math.PI / 2, -Math.PI / 2, true); // Left limb
+            ctx.ellipse(r, r, Math.abs(terminatorRx_signed), r, 0, -Math.PI / 2, Math.PI / 2, terminatorRx_signed < 0);
+        } else { // Waning (shadow on right)
+            ctx.arc(r, r, r, -Math.PI / 2, Math.PI / 2, true); // Right limb
+            ctx.ellipse(r, r, Math.abs(terminatorRx_signed), r, 0, Math.PI / 2, -Math.PI / 2, terminatorRx_signed < 0);
         }
         ctx.fill();
-    } else if (fraction <= 0.01) { // New moon
+    } else if (fraction <= 0.005) { // New moon
         ctx.beginPath();
         ctx.arc(r, r, r, 0, 2 * Math.PI);
         ctx.fill();
     }
-    ctx.globalCompositeOperation = 'source-over';
+    // For Full Moon (fraction >= 0.995), no shadow is drawn.
+
+    ctx.globalCompositeOperation = 'source-over'; // Reset composite operation
 }
 
 function updateMoonPosition(lat, lon) {
