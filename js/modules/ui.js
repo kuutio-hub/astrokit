@@ -86,6 +86,10 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
     }
     
     const dashboardHTML = `
+        <div id="location-display">
+            <i class="ph-map-pin"></i> Hozzávetőleges pozíció: Szélesség: ${lat.toFixed(4)}°, Hosszúság: ${lon.toFixed(4)}°
+        </div>
+
         <div class="accordion">
             <button class="accordion-header active">
                 <h2><i class="ph-clock-countdown"></i> Napi Események (24h)</h2>

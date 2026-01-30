@@ -87,6 +87,65 @@ const wikiContent = [
                 <li><strong>Legyél türelmes:</strong> Ne add fel, ha nem találsz meg valamit azonnal. A keresés és a felfedezés az élmény része. Használj csillagtérképet (akár telefonos applikációt vörös képernyő módban) a tájékozódáshoz.</li>
             </ol>
         `
+    },
+    {
+        title: "Mélyég-objektumok Típusai",
+        content: `
+            <p>A Naprendszeren túli objektumokat mélyég-objektumoknak (Deep Sky Objects, DSO) nevezzük. Főbb kategóriáik:</p>
+            <ul>
+                <li><strong>Csillaghalmazok:</strong> Csillagok gravitációsan kötött csoportjai.
+                    <ul>
+                        <li><em>Nyílthalmazok:</em> Néhány tucat vagy pár ezer, általában fiatal, forró csillag laza csoportja (pl. Fiastyúk - M45). A Tejút síkjában találhatóak.</li>
+                        <li><em>Gömbhalmazok:</em> Több tízezer vagy akár milliónyi, idős csillag sűrű, gömb alakú csoportosulása (pl. Herkules-gömbhalmaz - M13). A galaxisunk magja körül keringenek a halóban.</li>
+                    </ul>
+                </li>
+                <li><strong>Ködök (Nebulák):</strong> Csillagközi porból és gázból álló felhők.
+                    <ul>
+                        <li><em>Emissziós ködök:</em> A bennük vagy a közelükben lévő forró csillagok ionizálják a gázt, ami ezután saját fényt bocsát ki (pl. Orion-köd - M42). Gyakran vöröses színűek a hidrogén-alfa vonal miatt.</li>
+                        <li><em>Reflexiós ködök:</em> A közeli csillagok fényét verik vissza. Általában kék színűek, mert a por a kék fényt hatékonyabban szórja (pl. a Fiastyúk körüli ködösség).</li>
+                        <li><em>Sötét ködök:</em> Sűrű por- és gázfelhők, amelyek elnyelik a mögöttük lévő csillagok vagy ködök fényét (pl. Lófej-köd).</li>
+                        <li><em>Planetáris ködök:</em> Egy haldokló, Naphoz hasonló csillag által ledobott gázburok, amit a csillag forró magja gerjeszt fénylésre (pl. Gyűrűs-köd - M57). Nincs közük a bolygókhoz, csak alakjuk miatt kapták ezt a nevet.</li>
+                    </ul>
+                </li>
+                <li><strong>Galaxisok:</strong> Csillagok, gáz, por és sötét anyag hatalmas, gravitációsan kötött rendszerei.
+                    <ul>
+                        <li><em>Spirálgalaxisok:</em> Központi magból és abból kiinduló spirálkarokból állnak (pl. Androméda-galaxis - M31).</li>
+                        <li><em>Elliptikus galaxisok:</em> Sima, jellegtelen, ovális alakúak, főleg idős csillagokból állnak.</li>
+                        <li><em>Irreguláris galaxisok:</em> Szabálytalan alakúak, gyakran galaxisok ütközése vagy kölcsönhatása során jönnek létre.</li>
+                    </ul>
+                </li>
+            </ul>
+        `
+    },
+    {
+        title: "Vizuális Éslelési Technikák",
+        content: `
+            <p>A halvány mélyég-objektumok megpillantása gyakran nem egyszerű. Az alábbi technikák segíthetnek többet kihozni az éjszakából:</p>
+            <ul>
+                <li><strong>Distz-látás (Averted Vision):</strong> A szemünk perifériája érzékenyebb a gyenge fényre, mint a közepe. Ha nem közvetlenül az objektumra nézel, hanem egy kicsit mellé, a perifériás látásoddal gyakran megpillanthatod a halvány részleteket, amik direkt ránézésre láthatatlanok. Kísérletezz, hogy milyen irányba és távolságra kell elnézned!</li>
+                <li><strong>Távcső mozgatása:</strong> Finoman lökdösd meg a távcsövet! A szemünk sokkal érzékenyebb a mozgásra. Egy halvány, alig látható ködösség vagy galaxis jobban "kiugrik" a háttérből, ha a látómező enyhén mozog.</li>
+                <li><strong>Fáradt szem pihentetése:</strong> Ha sokáig erőlteted a szemed egy halvány objektumra, elfárad. Tarts szünetet, csukd be a szemed pár másodpercre, vagy nézz egy közeli fényesebb csillagra, majd próbálkozz újra.</li>
+                <li><strong>Megfelelő nagyítás:</strong> A túl nagy nagyítás "szétkeni" a halvány objektumok fényét, amitől láthatatlanná válhatnak. Kezdd kis nagyítással (nagy kilépő pupilla) az objektum megkereséséhez, majd próbálj közepes nagyítást a részletekhez.</li>
+            </ul>
+        `
+    },
+    {
+        title: "Asztrofotózás Alapjai",
+        content: `
+            <p>Az asztrofotózás célja, hogy a szemünk számára láthatatlan vagy alig látható égi csodákat a kamera érzékelőjén hosszú expozíciós idővel megörökítsük.</p>
+            <h4>Kulcs a Hosszú Expozíció</h4>
+            <p>A kamera másodpercekig, vagy akár percekig gyűjti a fényt egyetlen képpontra. Ehhez elengedhetetlen a stabil, követő mechanika, ami kiküszöböli a Föld forgását.</p>
+            <h4>Képfeldolgozás: A Stackelés</h4>
+            <p>A professzionális asztrofotók ritkán egyetlen expozícióból állnak. Ehelyett sok (több tucat vagy akár száz) rövidebb expozíciót, ún. "light frame"-et készítenek, amiket egy szoftver (pl. DeepSkyStacker, Siril) segítségével "egymásra raknak" (stackelnek). A folyamat matematikailag átlagolja a képeket, ami drámaian csökkenti a zajt és felerősíti a halvány részleteket.</p>
+            <h4>Kalibrációs Képek</h4>
+            <p>A legjobb eredmény eléréséhez a light frame-ek mellett kalibrációs képekre is szükség van:</p>
+            <ul>
+                <li><strong>Dark Frame-ek:</strong> A távcső objektívsapkájával letakarva, a light frame-ekkel azonos expozíciós idővel és ISO-val készült képek. Ezek csak a szenzor hőmérsékletéből adódó zajt tartalmazzák, amit a szoftver kivonhat a nyers képekből.</li>
+                <li><strong>Flat Frame-ek:</strong> Egyenletesen megvilágított felületről (pl. fehér póló a távcső végén, vagy a szürkületi ég) készült, rövid expozíciós képek. A porszemcsék és az optika vignettálásának (sötétedés a sarkoknál) hibáit rögzítik, amiket a szoftver korrigálhat.</li>
+                <li><strong>Bias Frame-ek:</strong> A lehető legrövidebb záridővel, letakart távcsővel készült képek. A szenzor kiolvasási zaját rögzítik.</li>
+            </ul>
+            <p>Ezeknek a kalibrációs képeknek a használatával sokkal tisztább, zajmentesebb és korrigáltabb végeredményt kapunk, ami az utómunka (stretching, szaturáció) során sokkal jobban feldolgozható.</p>
+        `
     }
 ];
 

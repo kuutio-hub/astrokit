@@ -203,6 +203,16 @@ main {
     gap: 1rem;
 }
 
+#location-display {
+    text-align: center;
+    color: var(--text-secondary-color);
+    font-size: 0.9rem;
+    background-color: var(--primary-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 0.5rem;
+}
+
 .card {
     background-color: var(--primary-color);
     border: 1px solid var(--border-color);
@@ -332,6 +342,16 @@ main {
 .data-list-results .rec-good { background-color: var(--rec-good-bg); color: var(--rec-good-text); }
 .data-list-results .rec-ok { background-color: var(--rec-ok-bg); color: var(--rec-ok-text); }
 .data-list-results .rec-bad { background-color: var(--rec-bad-bg); color: var(--rec-bad-text); }
+
+.data-list-results .result-recommendation-extra {
+    font-size: 0.8rem;
+    margin-top: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background-color: var(--secondary-color);
+    color: var(--text-secondary-color);
+    border-left: 3px solid var(--accent-color);
+}
 
 
 .astrophoto-setup {

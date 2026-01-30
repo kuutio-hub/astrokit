@@ -85,7 +85,11 @@ function updateAllCalculations() {
     } else if (exitPupil > 0) {
         exitPupilRec = { text: 'Nagy nagyítás', class: 'rec-ok' };
     }
-
+    
+    const minMag = teleAperture > 0 ? (teleAperture / 7) : 0;
+    const maxMag = teleAperture > 0 ? Math.min(350, teleAperture * 2) : 0;
+    const minMagEyepiece = minMag > 0 ? teleFocalLength / minMag : 0;
+    const maxMagEyepiece = maxMag > 0 ? teleFocalLength / maxMag : 0;
 
     const results = {
         optics: [
@@ -99,10 +103,12 @@ function updateAllCalculations() {
               description: "A távcső 'sebessége'. Kisebb érték (pl. f/5) 'gyorsabb' távcsövet jelent, ami rövidebb expozíciós időt igényel fotózásnál, és nagyobb látómezőt ad vizuálisan." }
         ],
         resolution: [
-            { title: "Minimális nagyítás", value: `${teleAperture > 0 ? (teleAperture / 7).toFixed(0) : 0}x`, inputs: `Átmérő: ${teleAperture}mm`,
-              description: "Az a legkisebb nagyítás, ahol a távcső teljes átmérőjét kihasználjuk anélkül, hogy a kilépő pupilla nagyobb lenne a szem pupillájánál. Ideális nagy kiterjedésű objektumokhoz." },
-            { title: "Gyakorlati max. nagyítás", value: `${teleAperture > 0 ? Math.min(350, teleAperture * 2).toFixed(0) : 0}x`, inputs: `Átmérő: ${teleAperture}mm`,
-              description: "Az a nagyítás, ami felett a kép már nem lesz élesebb, csak homályosabb a légköri viszonyok és az optika korlátai miatt." },
+            { title: "Minimális nagyítás", value: `${minMag.toFixed(0)}x`, inputs: `Átmérő: ${teleAperture}mm`,
+              description: "Az a legkisebb nagyítás, ahol a távcső teljes átmérőjét kihasználjuk anélkül, hogy a kilépő pupilla nagyobb lenne a szem pupillájánál. Ideális nagy kiterjedésű objektumokhoz.",
+              recommendationExtra: `Ezt egy ~${minMagEyepiece.toFixed(1)}mm-es okulárral érheted el.`},
+            { title: "Gyakorlati max. nagyítás", value: `${maxMag.toFixed(0)}x`, inputs: `Átmérő: ${teleAperture}mm`,
+              description: "Az a nagyítás, ami felett a kép már nem lesz élesebb, csak homályosabb a légköri viszonyok és az optika korlátai miatt.",
+              recommendationExtra: `Ezt egy ~${maxMagEyepiece.toFixed(1)}mm-es okulárral érheted el.`},
             { title: "Dawes-határ", value: `${teleAperture > 0 ? (116 / teleAperture).toFixed(2) : 0}"`, inputs: `Átmérő: ${teleAperture}mm`,
               description: "A távcső elméleti felbontóképessége ívmásodpercben, vagyis az a legkisebb távolság, amire két közeli csillagnak lennie kell, hogy különállónak lássuk őket." },
             { title: "Határmagnitúdó", value: `${teleAperture > 0 ? (7.7 + (5 * Math.log10(teleAperture / 10))).toFixed(2) : 0}m`, inputs: `Átmérő: ${teleAperture}mm`,
@@ -133,6 +139,7 @@ function renderResults(containerId, resultsArray) {
             <span class="result-value">${r.value}</span>
             <span class="result-inputs">${r.inputs}</span>
             ${r.recommendation && r.recommendation.text ? `<div class="result-recommendation ${r.recommendation.class}">${r.recommendation.text}</div>` : ''}
+            ${r.recommendationExtra ? `<div class="result-recommendation-extra">💡 ${r.recommendationExtra}</div>` : ''}
         </li>
     `).join('');
 }

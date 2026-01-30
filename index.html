@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Amatőrcsillagász Svájci Bicska</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔭</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100%22><text y=%22.9em%22 font-size=%2290%22>🔭</text></svg>">
     <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
     <script src="https://unpkg.com/phosphor-icons"></script>
 </head>
@@ -134,10 +134,14 @@
             <section id="analemma" class="content-section">
                 <h2><i class="ph-sun-horizon"></i> Helyi Analemma</h2>
                 <div class="card">
-                    <p class="description">A Nap látszólagos helyzete az égen minden nap ugyanabban az időpontban (helyi dél) egy éven keresztül. A nevezetes pontok (napfordulók, napéjegyenlőségek) kiemelve. A pulzáló pont a mai napot jelöli.</p>
+                    <p class="description">
+                        A Nap látszólagos helyzete az égen minden nap ugyanabban az időpontban (helyi dél) egy éven keresztül.
+                        A számítás a delelés időpontjára történik (UTC 12:00-hoz legközelebbi), ami az Ön időzónájában kb. <strong id="analemma-local-time">--:--</strong>.
+                        A pulzáló pont a mai napot jelöli.
+                    </p>
                     <div class="canvas-container">
                          <canvas id="analemma-canvas" width="600" height="400"></canvas>
-                         <div id="analemma-tooltip" class="formula-tooltip"></div>
+                         <div id="analemma-tooltip" class="info-tooltip"></div>
                          <div id="analemma-loader" class="loader-container" style="display: none;">
                             <div class="loader"></div>
                             <p>Analemma számítása és mentése...</p>

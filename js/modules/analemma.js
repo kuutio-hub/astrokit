@@ -63,6 +63,13 @@ export async function initAnalemma(lat, lon) {
             });
             await saveAnalemmaData(id, sunPositions);
         }
+        
+        const solarNoonToday = SunCalc.getTimes(new Date(), lat, lon).solarNoon;
+        const localTimeSpan = document.getElementById('analemma-local-time');
+        if (localTimeSpan) {
+             localTimeSpan.textContent = solarNoonToday.toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' });
+        }
+
         drawAnalemma(canvas, sunPositions);
     } catch (error) {
         console.error("Analemma hiba:", error);
