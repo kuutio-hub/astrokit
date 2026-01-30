@@ -143,62 +143,47 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
 function updateMoonVisual(canvas, phase) {
     const ctx = canvas.getContext('2d');
     const { width, height } = canvas;
-    const center = width / 2;
-    const radius = width / 2 - 1;
+    const r = width / 2; // radius and center x/y
 
     ctx.clearRect(0, 0, width, height);
 
-    // Common styles
-    const litGradient = ctx.createRadialGradient(center - radius / 2, center, 0, center, center, radius * 1.5);
-    litGradient.addColorStop(0, '#f8f8f8');
-    litGradient.addColorStop(1, '#c0c0c0');
-
-    const darkGradient = ctx.createRadialGradient(center + radius / 2, center, 0, center, center, radius * 1.5);
-    darkGradient.addColorStop(0, '#4a4a4a');
-    darkGradient.addColorStop(1, '#2c2c2c');
+    const litGradient = ctx.createRadialGradient(r*0.6, r*0.6, 0, r, r, r);
+    litGradient.addColorStop(0, '#f0f0f0');
+    litGradient.addColorStop(1, '#aaa');
+    
+    const darkGradient = ctx.createRadialGradient(r*1.4, r*1.4, r*1.2, r, r, r);
+    darkGradient.addColorStop(0, '#33373D');
+    darkGradient.addColorStop(1, '#222');
 
     // Draw the full circle with the appropriate base color
-    if (phase < 0.5) { // Waxing, starts dark
+    if (phase < 0.5) { // Waxing, dark base
         ctx.fillStyle = darkGradient;
-    } else { // Waning, starts lit
+    } else { // Waning, lit base
         ctx.fillStyle = litGradient;
     }
     ctx.beginPath();
-    ctx.arc(center, center, radius, 0, 2 * Math.PI);
+    ctx.arc(r, r, r, 0, 2 * Math.PI);
     ctx.fill();
 
-    // Determine the shape of the overlay
-    const phaseAngle = phase * 2 * Math.PI;
-    const terminatorAngle = Math.cos(phaseAngle);
-    const eclipseWidth = radius * terminatorAngle;
+    // The lit part
+    ctx.fillStyle = litGradient;
+    ctx.beginPath();
 
-    ctx.fillStyle = (phase < 0.5) ? litGradient : darkGradient;
+    // The terminator's horizontal radius
+    const terminatorXRadius = r * Math.cos(phase * 2 * Math.PI);
     
-    if (phase < 0.25 || phase > 0.75) { // Crescent
-        // Draw the other full half
-        ctx.beginPath();
-        const startAngle = -Math.PI / 2;
-        const endAngle = Math.PI / 2;
-        ctx.arc(center, center, radius, startAngle, endAngle, phase > 0.5);
-        ctx.fill();
-        
-        // Draw the terminator ellipse
-        ctx.beginPath();
-        ctx.ellipse(center, center, Math.abs(eclipseWidth), radius, 0, startAngle, endAngle, phase > 0.5);
-        ctx.fill();
-    } else { // Gibbous
-        // Draw the main half
-        ctx.beginPath();
-        const startAngle = Math.PI / 2;
-        const endAngle = -Math.PI / 2;
-        ctx.arc(center, center, radius, startAngle, endAngle, phase > 0.5);
-        ctx.fill();
-
-        // Draw the terminator ellipse
-        ctx.beginPath();
-        ctx.ellipse(center, center, Math.abs(eclipseWidth), radius, 0, startAngle, endAngle, phase < 0.5);
-        ctx.fill();
+    if (phase < 0.5) { // Waxing
+        // Lit right half
+        ctx.arc(r, r, r, -Math.PI/2, Math.PI/2, false);
+        // Terminator ellipse
+        ctx.ellipse(r, r, Math.abs(terminatorXRadius), r, 0, Math.PI/2, -Math.PI/2, true);
+    } else { // Waning
+        // Lit left half
+        ctx.arc(r, r, r, Math.PI/2, -Math.PI/2, false);
+        // Terminator ellipse
+        ctx.ellipse(r, r, Math.abs(terminatorXRadius), r, 0, -Math.PI/2, Math.PI/2, true);
     }
+    ctx.fill();
 }
 
 

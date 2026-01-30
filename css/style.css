@@ -595,6 +595,7 @@ form input, form select {
 }
 .planner-filters input, .planner-filters select {
     flex: 1 1 180px;
+    min-width: 0; /* Prevents overflow on flex items */
 }
 .table-container {
     width: 100%;
@@ -608,6 +609,9 @@ form input, form select {
     padding: 0.75rem;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
+}
+#planner-table td {
+    word-break: break-word; /* Prevents long names from overflowing */
 }
 #planner-table th {
     color: var(--text-secondary-color);

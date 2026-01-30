@@ -39,21 +39,31 @@ function drawPolarScope(canvas, lst) {
 
     // Draw outer ticks
     ctx.strokeStyle = lineLightColor;
-    for (let i = 0; i < 60 * 12; i++) { // Ticks every 10 minutes (72 total)
-        const angle = toRad(i * 0.5 - 90); // 360 degrees / 720 ticks
-        const isHour = i % 60 === 0;
-        const isHalfHour = i % 30 === 0;
+    ctx.lineWidth = 1;
+    // 144 ticks for every 10 minutes (24h * 6 = 144)
+    for (let i = 0; i < 144; i++) { 
+        const angle = toRad(i * 2.5 - 90); // 360 / 144 = 2.5 degrees per tick
+        const isHour = i % 6 === 0; // Every 6th tick is an hour
+        const isHalfHour = i % 3 === 0; // Every 3rd tick is a half hour
         
         let tickStart;
-        if (isHour) tickStart = radius * 0.92;
-        else if (isHalfHour) tickStart = radius * 0.95;
-        else tickStart = radius * 0.98;
+        if (isHour) {
+            tickStart = radius * 0.92;
+            ctx.lineWidth = 1.5;
+        } else if (isHalfHour) {
+            tickStart = radius * 0.95;
+            ctx.lineWidth = 1;
+        } else {
+            tickStart = radius * 0.98;
+            ctx.lineWidth = 0.5;
+        }
 
         ctx.beginPath();
         ctx.moveTo(center.x + Math.cos(angle) * tickStart, center.y + Math.sin(angle) * tickStart);
         ctx.lineTo(center.x + Math.cos(angle) * radius, center.y + Math.sin(angle) * radius);
         ctx.stroke();
 
+        // Draw hour numbers
         if (isHour) {
             ctx.fillStyle = textColorStrong;
             ctx.font = '16px sans-serif';
@@ -61,7 +71,7 @@ function drawPolarScope(canvas, lst) {
             ctx.textBaseline = 'middle';
             const textX = center.x + Math.cos(angle) * (radius - 20);
             const textY = center.y + Math.sin(angle) * (radius - 20);
-            ctx.fillText(i/30, textX, textY);
+            ctx.fillText(i/6, textX, textY);
         }
     }
 
@@ -85,6 +95,8 @@ function drawPolarScope(canvas, lst) {
     };
 
     // Draw Polaris path circle
+    ctx.strokeStyle = lineLightColor;
+    ctx.lineWidth = 1;
     ctx.setLineDash([2, 4]);
     ctx.beginPath();
     ctx.arc(center.x, center.y, radius * polarisDistFraction, 0, 2 * Math.PI);
