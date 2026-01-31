@@ -113,8 +113,9 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
                         <path d="${moonPath}" transform="${svgTransform}" fill="black" />
                     </mask>
                 </defs>
-                <circle cx="0" cy="0" r="16" fill="currentColor" />
-                <circle cx="0" cy="0" r="16" fill="#f0f0f0" mask="url(#moon-mask)" />
+                <circle cx="0" cy="0" r="16" class="moon-svg-glow" />
+                <circle cx="0" cy="0" r="16" class="moon-svg-darkside" />
+                <circle cx="0" cy="0" r="16" class="moon-svg-lightside" mask="url(#moon-mask)" />
             </svg>
         </div>
     `;
@@ -159,7 +160,7 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
                 </div>
                 <ul class="data-list">
                      <li><span class="label"><i class="ph-ruler"></i> Távolság</span> <span class="value">${moonData.distance.toFixed(0)} km</span></li>
-                     <li><span class="label"><i class="ph-arrows-out-line-vertical"></i> Delelési magasság</span> <span class="value">${formatAngle(moonData.culmination.altitude)}</span></li>
+                     <li><span class="label"><i class="ph-arrows-out-line-vertical"></i> Delelési magasság <i class="ph-info-fill info-icon" data-description="A Hold legmagasabb pozíciója az égen az adott napon. Negatív érték esetén a Hold egész nap a horizont alatt marad."></i></span> <span class="value">${formatAngle(moonData.culmination.altitude)}</span></li>
                      <li><span class="label">Aktuális magasság</span><span class="value" id="moon-alt"></span></li>
                     <li><span class="label">Aktuális azimut</span><span class="value" id="moon-az"></span></li>
                 </ul>

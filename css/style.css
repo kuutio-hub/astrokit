@@ -28,6 +28,9 @@
     --visibility-good: #2a9d8f;
     --visibility-ok: #e9c46a;
     --visibility-bad: #e76f51;
+    --moon-svg-darkside-color: #30363d;
+    --moon-svg-lightside-color: #e0e0e0;
+    --moon-svg-glow-color: rgba(88, 166, 255, 0.25);
 }
 
 body.night-mode {
@@ -58,6 +61,9 @@ body.night-mode {
     --visibility-good: #2a9d8f;
     --visibility-ok: #e9c46a;
     --visibility-bad: #e76f51;
+    --moon-svg-darkside-color: #4d0000;
+    --moon-svg-lightside-color: #ff665c;
+    --moon-svg-glow-color: rgba(255, 65, 54, 0.2);
 }
 
 
@@ -351,9 +357,19 @@ main {
 .moon-phase-visual canvas:hover {
     transform: scale(1.05);
 }
-.moon-phase-visual-svg svg {
-    color: var(--text-secondary-color);
+
+.moon-phase-visual-svg .moon-svg-glow {
+    fill: var(--moon-svg-glow-color);
+    transform: scale(1.05);
+    filter: blur(1px);
 }
+.moon-phase-visual-svg .moon-svg-darkside {
+    fill: var(--moon-svg-darkside-color);
+}
+.moon-phase-visual-svg .moon-svg-lightside {
+    fill: var(--moon-svg-lightside-color);
+}
+
 
 /* Calculators & Astrophoto */
 #calculators .sticky-container {
@@ -602,6 +618,33 @@ form input, form select {
 }
 
 /* Moon Calendar */
+.calendar-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.calendar-filters .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.calendar-filters .filter-group > strong {
+    font-size: 0.9rem;
+    color: var(--text-secondary-color);
+    margin-bottom: 0.25rem;
+}
+.calendar-filters label {
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.calendar-filters input[type="checkbox"] {
+    margin-right: 0.5rem;
+    accent-color: var(--accent-color);
+}
+
 .moon-calendar-controls {
     display: flex;
     justify-content: center;
@@ -650,10 +693,17 @@ form input, form select {
     padding: 0.5rem;
     display: flex;
     flex-direction: column;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.mc-day:hover {
+    background-color: var(--secondary-color);
 }
 .mc-day.other-month {
     background-color: transparent;
     border-color: transparent;
+    cursor: default;
 }
 .mc-day-header {
     font-weight: bold;
@@ -669,12 +719,38 @@ form input, form select {
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-bottom: 4px;
 }
 .mc-phase-container canvas {
     max-width: 80px;
     width: 100%;
     height: auto;
 }
+.mc-events {
+    list-style: none;
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+.mc-event-item {
+    padding: 2px 4px;
+    border-radius: 3px;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mc-event-moon { background-color: var(--moon-color); color: #111; }
+.mc-event-meteor { background-color: var(--event-meteor); color: #fff; }
+.mc-event-eclipse { background-color: var(--event-eclipse); color: #fff; }
+
+.mc-note-indicator {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    font-size: 0.8rem;
+    color: var(--accent-color);
+}
+
 
 /* Planner */
 .planner-filters {
@@ -895,6 +971,36 @@ input:checked+.slider:before{transform:translateX(24px)}
     display: block;
     margin: 0 auto;
 }
+#modal-body textarea {
+    width: 100%;
+    min-height: 150px;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 0.5rem;
+    border-radius: 6px;
+    margin-top: 1rem;
+}
+#modal-body .modal-actions {
+    margin-top: 1rem;
+    text-align: right;
+}
+#modal-body .modal-actions button {
+    background-color: var(--accent-color);
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+#modal-body .modal-actions button:hover {
+    background-color: var(--accent-hover-color);
+}
+body.night-mode #modal-body .modal-actions button {
+    color: #000;
+}
+
 
 /* Polaris Glow Effect */
 @keyframes pulse {
