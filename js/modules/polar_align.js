@@ -1,5 +1,5 @@
 
-let animationFrameId = null;
+let animationIntervalId = null;
 let lat = 0;
 let lon = 0;
 let pulseSize = 0;
@@ -39,8 +39,8 @@ function drawPolarScope(canvas, lst) {
     ctx.fillRect(0, 0, width, height);
     
     // Draw 12-hour outer circle with ticks
-    for (let i = 0; i < 72; i++) { // 72 ticks for 5-minute intervals
-        const angle = toRad(i * 5 - 90);
+    for (let i = 0; i < 72; i++) {
+        const angle = toRad(i * 5 - 90); // 0 is at the top (-90 deg)
         const isHour = i % 6 === 0;
         const isTenMin = i % 2 === 0;
 
@@ -52,9 +52,8 @@ function drawPolarScope(canvas, lst) {
         } else if (isTenMin) {
             tickStart = radius * 0.94;
             ctx.lineWidth = 1.5;
-        } else { // 5-minute tick
-            tickStart = radius * 0.97;
-            ctx.lineWidth = 0.75;
+        } else {
+            continue; // Don't draw 5-minute ticks
         }
         
         ctx.beginPath();
@@ -62,8 +61,9 @@ function drawPolarScope(canvas, lst) {
         ctx.lineTo(center.x + Math.cos(angle) * radius, center.y + Math.sin(angle) * radius);
         ctx.stroke();
 
-        if (isHour) {
-            ctx.fillStyle = textColor; // Fainter numbers
+        let hour = (i / 6);
+        if (isHour && hour % 3 === 0) {
+            ctx.fillStyle = textColor;
             ctx.font = 'bold 16px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -72,9 +72,8 @@ function drawPolarScope(canvas, lst) {
             ctx.save();
             ctx.translate(textX, textY);
             ctx.rotate(angle + Math.PI / 2);
-            let hour = (i / 6) + 3; // Start with 3 at the top
-            if (hour > 12) hour -= 12;
-            ctx.fillText(hour, 0, 0);
+            let hourText = hour === 0 ? 12 : hour;
+            ctx.fillText(hourText, 0, 0);
             ctx.restore();
         }
     }
@@ -141,22 +140,20 @@ function animate() {
     const lst = calculateSiderealTime(now, lon);
     
     drawPolarScope(canvas, lst);
-    
-    animationFrameId = requestAnimationFrame(animate);
 }
 
 export function initPolarAlign(_lat, _lon) {
     lat = _lat;
     lon = _lon;
-
-    if (!animationFrameId) {
-        animate();
-    }
+    
+    stopPolarAlignAnimation(); // Clear any existing interval
+    animate(); // Draw immediately
+    animationIntervalId = setInterval(animate, 5000); // Then update every 5 seconds
 }
 
 export function stopPolarAlignAnimation() {
-    if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
+    if (animationIntervalId) {
+        clearInterval(animationIntervalId);
+        animationIntervalId = null;
     }
 }

@@ -86,18 +86,22 @@ export function initAnalemma(lat, lon) {
     redraw();
 }
 
-function calculateAnalemma(lat, lon, hour) {
+function calculateAnalemma(lat, lon, localHour) {
     const positions = [];
     const year = new Date().getFullYear();
-    const localHour = hour - new Date().getTimezoneOffset() / 60;
 
     for (let i = 0; i < 365; i++) {
-        const date = new Date(Date.UTC(year, 0, i + 1, localHour));
-        const pos = SunCalc.getPosition(date, lat, lon);
+        const date = new Date(year, 0, i + 1);
+        const tzOffsetMinutes = date.getTimezoneOffset();
+        const utcHour = localHour + (tzOffsetMinutes / 60);
+
+        const dateUTC = new Date(Date.UTC(year, 0, i + 1, Math.floor(utcHour), (utcHour % 1) * 60));
+        
+        const pos = SunCalc.getPosition(dateUTC, lat, lon);
         positions.push({
-            date: date,
+            date: dateUTC,
             altitude: pos.altitude * 180 / Math.PI,
-            azimuth: pos.azimuth * 180 / Math.PI
+            azimuth: pos.azimuth * 180 / Math.PI + 180 // Convert to 0=N, 180=S
         });
     }
     return positions;
@@ -110,24 +114,25 @@ function drawAnalemma(canvas, sunPositions) {
     
     const styles = getComputedStyle(document.body);
     const padding = 50;
+    const paddingBottom = 70; // More space for azimuth labels
     const plotWidth = width - 2 * padding;
-    const plotHeight = height - 2 * padding;
+    const plotHeight = height - padding - paddingBottom;
 
-    const visiblePositions = sunPositions.filter(p => p.altitude > 0);
-    if (visiblePositions.length < 2) {
-        ctx.fillStyle = styles.getPropertyValue('--bg-color').trim();
-        ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = styles.getPropertyValue('--bg-color').trim();
+    ctx.fillRect(0, 0, width, height);
+
+    if (sunPositions.length === 0) {
         ctx.fillStyle = styles.getPropertyValue('--text-secondary-color').trim();
         ctx.textAlign = 'center';
         ctx.font = "16px sans-serif";
-        ctx.fillText("A Nap ebben az időpontban egész évben a horizont alatt van.", width / 2, height / 2);
+        ctx.fillText("Hiba a pozíciók számításakor.", width / 2, height / 2);
         return [];
     }
 
-    const minAlt = Math.min(...visiblePositions.map(p => p.altitude));
-    const maxAlt = Math.max(...visiblePositions.map(p => p.altitude));
+    const minAlt = Math.min(...sunPositions.map(p => p.altitude));
+    const maxAlt = Math.max(...sunPositions.map(p => p.altitude));
     const altRange = maxAlt - minAlt;
-    const azValues = visiblePositions.map(p => p.azimuth);
+    const azValues = sunPositions.map(p => p.azimuth);
     const minAz = Math.min(...azValues);
     const maxAz = Math.max(...azValues);
     const azRange = maxAz - minAz;
@@ -136,7 +141,7 @@ function drawAnalemma(canvas, sunPositions) {
     const scaleY = altRange > 0 ? plotHeight / altRange : 1;
     const scaleX = azRange > 0 ? plotWidth / (azRange * horizontalExaggeration) : 1;
 
-    const getDayOfYear = date => Math.floor((date - new Date(date.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+    const getDayOfYear = date => Math.floor((date - new Date(Date.UTC(date.getUTCFullYear(), 0, 0))) / (1000 * 60 * 60 * 24));
     
     const dates = getSolsticeEquinoxDates(year);
     const specialPointsData = [
@@ -150,44 +155,74 @@ function drawAnalemma(canvas, sunPositions) {
 
     const getCanvasCoords = (pos) => {
         const x = padding + ((pos.azimuth - minAz) * scaleX * horizontalExaggeration);
-        const y = height - padding - ((pos.altitude - minAlt) * scaleY);
+        const y = height - paddingBottom - ((pos.altitude - minAlt) * scaleY);
         return { x, y };
     };
-
-    ctx.fillStyle = styles.getPropertyValue('--bg-color').trim();
-    ctx.fillRect(0, 0, width, height);
     
+    // Draw Axes and Grid
     ctx.strokeStyle = styles.getPropertyValue('--border-color').trim();
     ctx.lineWidth = 1;
     ctx.font = "12px sans-serif";
-    ctx.textAlign = 'center';
     ctx.fillStyle = styles.getPropertyValue('--text-secondary-color').trim();
     
+    // Altitude lines (Y-axis)
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
     for(let i=0; i <= 5; i++) {
         const alt = minAlt + (altRange / 5) * i;
-        const y = height - padding - (plotHeight / 5) * i;
+        const y = height - paddingBottom - (plotHeight / 5) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding - 5, y);
+        ctx.lineTo(width - padding, y);
+        ctx.stroke();
+        ctx.fillText(`${alt.toFixed(0)}°`, padding - 10, y);
+    }
+
+    // Horizon line
+    if (minAlt < 0 && maxAlt > 0) {
+        const y = height - paddingBottom - ((0 - minAlt) * scaleY);
         ctx.beginPath();
         ctx.moveTo(padding, y);
         ctx.lineTo(width - padding, y);
+        ctx.strokeStyle = styles.getPropertyValue('--accent-color').trim();
+        ctx.lineWidth = 1.5;
         ctx.stroke();
-        ctx.fillText(`${alt.toFixed(0)}°`, padding - 20, y);
+        ctx.fillStyle = styles.getPropertyValue('--accent-color').trim();
+        ctx.fillText('Horizont', width - padding + 5, y);
     }
+    
+    // Azimuth labels (X-axis)
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    const azLabels = [
+        {deg: 90, name: 'K'}, {deg: 135, name: 'DK'}, {deg: 180, name: 'D'}, 
+        {deg: 225, name: 'DNY'}, {deg: 270, name: 'NY'}
+    ];
+    azLabels.forEach(label => {
+        if(label.deg >= minAz && label.deg <= maxAz) {
+            const x = padding + ((label.deg - minAz) * scaleX * horizontalExaggeration);
+            ctx.fillText(label.name, x, height - paddingBottom + 10);
+            ctx.fillText(`${label.deg}°`, x, height - paddingBottom + 25);
+        }
+    });
 
+    // Draw Analemma Path
     ctx.beginPath();
-    const firstPoint = getCanvasCoords(visiblePositions[0]);
+    const firstPoint = getCanvasCoords(sunPositions[0]);
     ctx.moveTo(firstPoint.x, firstPoint.y);
-    for(let i = 1; i < visiblePositions.length; i++) {
-        const point = getCanvasCoords(visiblePositions[i]);
+    for(let i = 1; i < sunPositions.length; i++) {
+        const point = getCanvasCoords(sunPositions[i]);
         ctx.lineTo(point.x, point.y);
     }
     ctx.strokeStyle = styles.getPropertyValue('--text-secondary-color').trim();
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
+    // Draw Special Points
     const specialPointsCoords = [];
     specialPointsData.forEach(p => {
         const pos = sunPositions[getDayOfYear(p.date) - 1];
-        if (pos.altitude > 0) {
+        if (pos) {
             const { x, y } = getCanvasCoords(pos);
             ctx.beginPath();
             ctx.fillStyle = p.color;
@@ -200,7 +235,7 @@ function drawAnalemma(canvas, sunPositions) {
     });
 
     const todayPos = sunPositions[todayIndex];
-    if (todayPos && todayPos.altitude > 0) {
+    if (todayPos) {
         const { x, y } = getCanvasCoords(todayPos);
         ctx.beginPath();
         ctx.fillStyle = '#ff6b5c';

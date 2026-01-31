@@ -151,10 +151,7 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
     setInterval(() => updateMoonPosition(lat, lon), 60000);
 }
 
-function drawCraters(ctx, radius, isLitCheck, opacity) {
-    ctx.save();
-    ctx.clip(); 
-    
+function drawCraters(ctx, radius, opacity) {
     const craterCount = Math.floor(radius * 1.5); 
     for (let i = 0; i < craterCount; i++) {
         const angle = Math.random() * 2 * Math.PI;
@@ -162,29 +159,23 @@ function drawCraters(ctx, radius, isLitCheck, opacity) {
         const x = radius + Math.cos(angle) * dist;
         const y = radius + Math.sin(angle) * dist;
 
-        if (isLitCheck(x, y)) {
-            const craterRadius = (Math.random() * 0.03 + 0.01) * radius * (1 - dist/radius * 0.5);
-            ctx.beginPath();
-            ctx.arc(x, y, craterRadius, 0, 2 * Math.PI);
-            ctx.fillStyle = `rgba(0, 0, 0, ${opacity * (Math.random() * 0.15 + 0.1)})`;
-            ctx.fill();
+        const craterRadius = (Math.random() * 0.03 + 0.01) * radius * (1 - dist/radius * 0.5);
+        ctx.beginPath();
+        ctx.arc(x, y, craterRadius, 0, 2 * Math.PI);
+        ctx.fillStyle = `rgba(0, 0, 0, ${opacity * (Math.random() * 0.15 + 0.1)})`;
+        ctx.fill();
 
-            const rimAngle = angle + Math.PI * 1.1;
-            const rimX = x + Math.cos(rimAngle) * craterRadius * 0.2;
-            const rimY = y + Math.sin(rimAngle) * craterRadius * 0.2;
-            ctx.beginPath();
-            ctx.arc(rimX, rimY, craterRadius * 0.9, 0, 2 * Math.PI);
-            ctx.fillStyle = `rgba(255, 255, 255, ${opacity * (Math.random() * 0.12)})`;
-            ctx.fill();
-        }
+        const rimAngle = angle + Math.PI * 1.1;
+        const rimX = x + Math.cos(rimAngle) * craterRadius * 0.2;
+        const rimY = y + Math.sin(rimAngle) * craterRadius * 0.2;
+        ctx.beginPath();
+        ctx.arc(rimX, rimY, craterRadius * 0.9, 0, 2 * Math.PI);
+        ctx.fillStyle = `rgba(255, 255, 255, ${opacity * (Math.random() * 0.12)})`;
+        ctx.fill();
     }
-    ctx.restore();
 }
 
-function drawMaria(ctx, radius, isLitCheck, opacity) {
-    ctx.save();
-    ctx.clip();
-    
+function drawMaria(ctx, radius, opacity) {
     maria.forEach(mare => {
         ctx.beginPath();
         const startX = radius + mare.path[0][0] * radius;
@@ -200,8 +191,6 @@ function drawMaria(ctx, radius, isLitCheck, opacity) {
         ctx.fillStyle = `rgba(0, 0, 0, ${opacity * mare.opacity})`;
         ctx.fill();
     });
-
-    ctx.restore();
 }
 
 function updateMoonVisual(canvas, fraction, phase) {
@@ -216,71 +205,54 @@ function updateMoonVisual(canvas, fraction, phase) {
     litGradient.addColorStop(0.7, '#e0e0e0');
     litGradient.addColorStop(1, '#c0c0c0');
 
-    const darkGradient = ctx.createRadialGradient(r * 1.3, r * 1.3, r, r, r, r * 2);
-    darkGradient.addColorStop(0, '#3a3a3a');
-    darkGradient.addColorStop(0.5, '#2c2c2c');
-    darkGradient.addColorStop(1, '#1a1a1a');
-
     const earthshineGradient = ctx.createRadialGradient(r, r, r * 0.8, r, r, r);
     earthshineGradient.addColorStop(0, '#282c34');
     earthshineGradient.addColorStop(1, '#1a1d22');
 
-    // --- 1. Draw Earthshine Base ---
+    // --- 1. Draw Earthshine Base (entire disk) ---
     ctx.fillStyle = earthshineGradient;
     ctx.beginPath();
     ctx.arc(r, r, r, 0, 2 * Math.PI);
     ctx.fill();
-
-    // --- 2. Draw Maria and Craters on the dark side ---
+    
+    // Draw features on the dark side
     ctx.save();
     ctx.beginPath();
     ctx.arc(r, r, r, 0, 2 * Math.PI);
-    const isAlwaysTrue = () => true;
-    drawMaria(ctx, r, isAlwaysTrue, 0.5);
-    drawCraters(ctx, r, isAlwaysTrue, 0.4);
+    ctx.clip();
+    drawMaria(ctx, r, 0.5);
+    drawCraters(ctx, r, 0.4);
     ctx.restore();
 
-    // --- 3. Draw Base Lit Moon ---
-    ctx.fillStyle = litGradient;
-    ctx.beginPath();
-    ctx.arc(r, r, r, 0, 2 * Math.PI);
-    ctx.fill();
+    // --- 2. Create clipping path for the lit area ---
+    const terminatorX_signed = r * Math.cos(phase * 2 * Math.PI);
+    const terminatorRx = Math.abs(terminatorX_signed);
     
-    // --- 4. Draw Maria and Craters on the lit side ---
-    ctx.save();
     ctx.beginPath();
-    ctx.arc(r, r, r, 0, 2 * Math.PI);
-    const isLitCheck = (x, y) => ctx.isPointInPath(x, y);
-    drawMaria(ctx, r, isLitCheck, 1.0);
-    drawCraters(ctx, r, isLitCheck, 1.0);
-    ctx.restore();
-    
-    // --- 5. Draw Terminator Shadow ---
-    ctx.fillStyle = darkGradient;
-    ctx.globalCompositeOperation = 'source-atop'; // Draw shadow only on top of the lit circle
-
-    // This signed value determines the shape and direction of the terminator
-    const terminatorRx_signed = r * Math.cos(phase * 2 * Math.PI);
-
-    if (fraction > 0.005 && fraction < 0.995) { // Add a small tolerance
-        ctx.beginPath();
-        if (phase <= 0.5) { // Waxing (shadow on left)
-            ctx.arc(r, r, r, Math.PI / 2, -Math.PI / 2, true); // Left limb
-            ctx.ellipse(r, r, Math.abs(terminatorRx_signed), r, 0, -Math.PI / 2, Math.PI / 2, terminatorRx_signed < 0);
-        } else { // Waning (shadow on right)
-            ctx.arc(r, r, r, -Math.PI / 2, Math.PI / 2, true); // Right limb
-            ctx.ellipse(r, r, Math.abs(terminatorRx_signed), r, 0, Math.PI / 2, -Math.PI / 2, terminatorRx_signed < 0);
-        }
-        ctx.fill();
-    } else if (fraction <= 0.005) { // New moon
-        ctx.beginPath();
-        ctx.arc(r, r, r, 0, 2 * Math.PI);
-        ctx.fill();
+    if (phase <= 0.5) { // Waxing (light on the right)
+        ctx.arc(r, r, r, -Math.PI / 2, Math.PI / 2, false); // Right limb
+        ctx.ellipse(r, r, terminatorRx, r, 0, Math.PI / 2, -Math.PI / 2, terminatorX_signed > 0);
+    } else { // Waning (light on the left)
+        ctx.arc(r, r, r, Math.PI / 2, -Math.PI / 2, false); // Left limb
+        ctx.ellipse(r, r, terminatorRx, r, 0, -Math.PI / 2, Math.PI / 2, terminatorX_signed > 0);
     }
-    // For Full Moon (fraction >= 0.995), no shadow is drawn.
+    ctx.closePath();
 
-    ctx.globalCompositeOperation = 'source-over'; // Reset composite operation
+    // --- 3. Draw the lit part inside the clip ---
+    ctx.save();
+    ctx.clip(); // Apply the path as a clip
+
+    // Draw lit base
+    ctx.fillStyle = litGradient;
+    ctx.fillRect(0, 0, width, height);
+    
+    // Draw features on the lit side
+    drawMaria(ctx, r, 1.0);
+    drawCraters(ctx, r, 1.0);
+
+    ctx.restore(); // Remove the clip
 }
+
 
 function updateMoonPosition(lat, lon) {
     const now = new Date();
