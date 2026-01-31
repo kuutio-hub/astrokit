@@ -15,6 +15,7 @@ export function initAnalemma(lat, lon) {
     const canvas = document.getElementById('analemma-canvas');
     const timeSlider = document.getElementById('analemma-time');
     const timeDisplay = document.getElementById('analemma-time-display');
+    const utcToggle = document.getElementById('analemma-utc-toggle');
     const loader = document.getElementById('analemma-loader');
     const tooltip = document.getElementById('analemma-tooltip');
 
@@ -31,12 +32,13 @@ export function initAnalemma(lat, lon) {
     const redraw = async () => {
         loader.style.display = 'flex';
         const hour = parseFloat(timeSlider.value);
+        const useUTC = utcToggle.checked;
         const minutes = (hour % 1) * 60;
         timeDisplay.textContent = `${String(Math.floor(hour)).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
         
         await new Promise(resolve => setTimeout(resolve, 20));
 
-        sunPositions = calculateAnalemma(lat, lon, hour);
+        sunPositions = calculateAnalemma(lat, lon, hour, useUTC);
         specialPointsCoords = drawAnalemma(canvas, sunPositions, hour);
         loader.style.display = 'none';
     };
@@ -81,20 +83,24 @@ export function initAnalemma(lat, lon) {
         timeDisplay.textContent = `${String(Math.floor(hour)).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
     });
     timeSlider.addEventListener('change', redraw);
+    utcToggle.addEventListener('change', redraw);
 
     // Initial draw
     redraw();
 }
 
-function calculateAnalemma(lat, lon, localHour) {
+function calculateAnalemma(lat, lon, hour, useUTC) {
     const positions = [];
     const year = new Date().getFullYear();
 
     for (let i = 0; i < 365; i++) {
         const date = new Date(year, 0, i + 1);
-        const tzOffsetMinutes = date.getTimezoneOffset();
-        const utcHour = localHour + (tzOffsetMinutes / 60);
-
+        let utcHour = hour;
+        if (!useUTC) {
+             const tzOffsetMinutes = date.getTimezoneOffset();
+             utcHour = hour + (tzOffsetMinutes / 60);
+        }
+       
         const dateUTC = new Date(Date.UTC(year, 0, i + 1, Math.floor(utcHour), (utcHour % 1) * 60));
         
         const pos = SunCalc.getPosition(dateUTC, lat, lon);

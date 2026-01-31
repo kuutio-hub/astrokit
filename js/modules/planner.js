@@ -91,12 +91,13 @@ function getPlanetPosition(planet, date, sun) {
 
     // Very simplified RA/Dec conversion (assumes 0 ecliptic latitude)
     const ecl = toRad(23.4397);
-    const ra = Math.atan2(Math.sin(toRad(geocentric_lon)) * Math.cos(ecl), Math.cos(toRad(geocentric_lon)));
-    const dec = Math.asin(Math.sin(ecl) * Math.sin(toRad(geocentric_lon)));
+    let ra_rad = Math.atan2(Math.sin(toRad(geocentric_lon)) * Math.cos(ecl), Math.cos(toRad(geocentric_lon)));
+    if (ra_rad < 0) ra_rad += 2 * Math.PI; // Normalize RA to be 0-2PI
+    const dec_rad = Math.asin(Math.sin(ecl) * Math.sin(toRad(geocentric_lon)));
     
     return { 
-        ra: [toDeg(ra) / 15, 0, 0], 
-        dec: [toDeg(dec), 0, 0],
+        ra: [toDeg(ra_rad) / 15, 0, 0], 
+        dec: [toDeg(dec_rad), 0, 0],
         ecliptic_lon: geocentric_lon
     };
 }
@@ -145,7 +146,7 @@ function filterAndRender() {
     const filtered = allObjects.filter(obj => {
         const nameMatch = obj.name.toLowerCase().includes(searchTerm) || obj.id.toLowerCase().includes(searchTerm);
         const typeMatch = typeFilter === 'all' || obj.type === typeFilter;
-        const constMatch = constFilter === 'all' || obj.const === constFilter;
+        const constMatch = constFilter === 'all' || obj.const === constMatch;
         const visibleMatch = !visibleOnly || obj.alt > 1; 
         return nameMatch && typeMatch && constMatch && visibleMatch;
     });

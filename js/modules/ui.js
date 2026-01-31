@@ -1,5 +1,12 @@
 
 import { maria } from '../data/maria.js';
+import { moonTexture } from '../data/moon_texture.js';
+
+let timeUpdateInterval = null;
+const moonImage = new Image();
+let moonImageLoaded = false;
+moonImage.onload = () => { moonImageLoaded = true; };
+moonImage.src = moonTexture;
 
 function formatTime(date) {
     if (!date || isNaN(date)) return 'N/A';
@@ -20,6 +27,17 @@ function getHungarianMoonPhaseName(phase) {
     if (phase < 0.77) return "Utolsó negyed";
     return "Fogyó sarló";
 }
+
+function updateTimeDisplay() {
+    const localTimeEl = document.getElementById('local-time');
+    const utcTimeEl = document.getElementById('utc-time');
+    if (!localTimeEl || !utcTimeEl) return;
+    
+    const now = new Date();
+    localTimeEl.textContent = now.toLocaleTimeString('hu-HU');
+    utcTimeEl.textContent = now.toLocaleTimeString('hu-HU', { timeZone: 'UTC', hour12: false }) + ' UTC';
+}
+
 
 export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
     const container = document.getElementById('dashboard-container');
@@ -81,6 +99,10 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
     }
     
     const dashboardHTML = `
+        <div id="time-display" class="time-display">
+            <div><i class="ph-clock"></i> Helyi idő: <span id="local-time">--:--:--</span></div>
+            <div><i class="ph-globe"></i> Világidő: <span id="utc-time">--:--:-- UTC</span></div>
+        </div>
         <div id="location-display">
             <i class="ph-map-pin"></i> Hozzávetőleges pozíció: Szélesség: ${lat.toFixed(4)}°, Hosszúság: ${lon.toFixed(4)}°
         </div>
@@ -133,16 +155,31 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
     `;
 
     container.innerHTML = dashboardHTML;
+
+    if (timeUpdateInterval) clearInterval(timeUpdateInterval);
+    updateTimeDisplay();
+    timeUpdateInterval = setInterval(updateTimeDisplay, 1000);
+    
     const canvas = document.getElementById('moon-visual-canvas');
     if (canvas) {
-        updateMoonVisual(canvas, moonIllumination.fraction, moonIllumination.phase);
+        const drawFn = () => updateMoonVisual(canvas, moonIllumination.fraction, moonIllumination.phase);
+        if (moonImageLoaded) {
+            drawFn();
+        } else {
+            moonImage.onload = drawFn;
+        }
         
         canvas.addEventListener('click', () => {
             const modal = document.getElementById('app-modal');
             const modalBody = document.getElementById('modal-body');
             modalBody.innerHTML = '<h3>Aktuális Holdfázis</h3><canvas id="modal-moon-canvas" width="400" height="400"></canvas>';
             const modalCanvas = document.getElementById('modal-moon-canvas');
-            updateMoonVisual(modalCanvas, moonIllumination.fraction, moonIllumination.phase);
+            const drawModalFn = () => updateMoonVisual(modalCanvas, moonIllumination.fraction, moonIllumination.phase);
+             if (moonImageLoaded) {
+                drawModalFn();
+            } else {
+                moonImage.onload = drawModalFn;
+            }
             modal.style.display = 'flex';
         });
     }
@@ -151,80 +188,34 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
     setInterval(() => updateMoonPosition(lat, lon), 60000);
 }
 
-function drawCraters(ctx, radius, opacity) {
-    const craterCount = Math.floor(radius * 1.5); 
-    for (let i = 0; i < craterCount; i++) {
-        const angle = Math.random() * 2 * Math.PI;
-        const dist = Math.random() * radius * 0.95;
-        const x = radius + Math.cos(angle) * dist;
-        const y = radius + Math.sin(angle) * dist;
-
-        const craterRadius = (Math.random() * 0.03 + 0.01) * radius * (1 - dist/radius * 0.5);
-        ctx.beginPath();
-        ctx.arc(x, y, craterRadius, 0, 2 * Math.PI);
-        ctx.fillStyle = `rgba(0, 0, 0, ${opacity * (Math.random() * 0.15 + 0.1)})`;
-        ctx.fill();
-
-        const rimAngle = angle + Math.PI * 1.1;
-        const rimX = x + Math.cos(rimAngle) * craterRadius * 0.2;
-        const rimY = y + Math.sin(rimAngle) * craterRadius * 0.2;
-        ctx.beginPath();
-        ctx.arc(rimX, rimY, craterRadius * 0.9, 0, 2 * Math.PI);
-        ctx.fillStyle = `rgba(255, 255, 255, ${opacity * (Math.random() * 0.12)})`;
-        ctx.fill();
-    }
-}
-
-function drawMaria(ctx, radius, opacity) {
-    maria.forEach(mare => {
-        ctx.beginPath();
-        const startX = radius + mare.path[0][0] * radius;
-        const startY = radius - mare.path[0][1] * radius; // Y is inverted in canvas
-        ctx.moveTo(startX, startY);
-
-        for (let i = 1; i < mare.path.length; i++) {
-             const x = radius + mare.path[i][0] * radius;
-             const y = radius - mare.path[i][1] * radius;
-             ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-        ctx.fillStyle = `rgba(0, 0, 0, ${opacity * mare.opacity})`;
-        ctx.fill();
-    });
-}
 
 function updateMoonVisual(canvas, fraction, phase) {
     const ctx = canvas.getContext('2d');
     const { width, height } = canvas;
     const r = width / 2;
     ctx.clearRect(0, 0, width, height);
+    if (!moonImageLoaded) return;
 
-    // --- Create Gradients ---
-    const litGradient = ctx.createRadialGradient(r * 0.7, r * 0.7, r * 0.1, r, r, r);
-    litGradient.addColorStop(0, '#f9f9f9');
-    litGradient.addColorStop(0.7, '#e0e0e0');
-    litGradient.addColorStop(1, '#c0c0c0');
-
-    const earthshineGradient = ctx.createRadialGradient(r, r, r * 0.8, r, r, r);
-    earthshineGradient.addColorStop(0, '#282c34');
-    earthshineGradient.addColorStop(1, '#1a1d22');
-
-    // --- 1. Draw Earthshine Base (entire disk) ---
-    ctx.fillStyle = earthshineGradient;
-    ctx.beginPath();
-    ctx.arc(r, r, r, 0, 2 * Math.PI);
-    ctx.fill();
-    
-    // Draw features on the dark side
+    // --- 1. Draw Glow ---
     ctx.save();
+    ctx.shadowColor = 'rgba(200, 200, 255, 0.5)';
+    ctx.shadowBlur = r * 0.2;
+    ctx.fillStyle = 'black';
+    ctx.beginPath();
+    ctx.arc(r, r, r * 0.98, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.restore();
+
+    // --- 2. Draw Earthshine Base (dim texture) ---
+    ctx.save();
+    ctx.globalAlpha = 0.25; // Earthshine brightness
     ctx.beginPath();
     ctx.arc(r, r, r, 0, 2 * Math.PI);
     ctx.clip();
-    drawMaria(ctx, r, 0.5);
-    drawCraters(ctx, r, 0.4);
+    ctx.drawImage(moonImage, 0, 0, width, height);
     ctx.restore();
 
-    // --- 2. Create clipping path for the lit area ---
+    // --- 3. Create clipping path for the lit area ---
     const terminatorX_signed = r * Math.cos(phase * 2 * Math.PI);
     const terminatorRx = Math.abs(terminatorX_signed);
     
@@ -238,19 +229,11 @@ function updateMoonVisual(canvas, fraction, phase) {
     }
     ctx.closePath();
 
-    // --- 3. Draw the lit part inside the clip ---
+    // --- 4. Draw the lit texture inside the clip ---
     ctx.save();
-    ctx.clip(); // Apply the path as a clip
-
-    // Draw lit base
-    ctx.fillStyle = litGradient;
-    ctx.fillRect(0, 0, width, height);
-    
-    // Draw features on the lit side
-    drawMaria(ctx, r, 1.0);
-    drawCraters(ctx, r, 1.0);
-
-    ctx.restore(); // Remove the clip
+    ctx.clip();
+    ctx.drawImage(moonImage, 0, 0, width, height);
+    ctx.restore();
 }
 
 

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="hu">
 <head>
@@ -196,12 +197,17 @@
                         <h2><i class="ph-sun-horizon"></i> Helyi Analemma</h2>
                         <div class="analemma-controls">
                             <label for="analemma-time">Időpont:</label>
-                            <input type="range" id="analemma-time" min="6" max="18" value="10.5" step="0.5">
-                            <span id="analemma-time-display">10:30</span>
+                            <input type="range" id="analemma-time" min="0" max="23.99" value="12" step="0.25">
+                            <span id="analemma-time-display">12:00</span>
+                             <label class="toggle-switch analemma-switch">
+                                <input type="checkbox" id="analemma-utc-toggle" checked>
+                                <span class="slider"></span>
+                                UTC
+                            </label>
                         </div>
                     </div>
                     <p class="description">
-                        Az analemma a Nap égi pozícióját mutatja az év minden napján, a kiválasztott időpontban. A csúszkával változtathatod az időpontot, és megfigyelheted, hogyan dől és változik a görbe alakja. A klasszikus, álló "nyolcas" a helyi dél (kb. 12:00) idején látható.
+                        Az analemma a Nap égi pozícióját mutatja az év minden napján, a kiválasztott időpontban. A kapcsolóval válthatsz a helyi idő és az UTC között. UTC módban látszik a "tiszta" görbe, Helyi idő módban pedig az időzóna és a nyári időszámítás hatása.
                     </p>
                     <div class="canvas-container">
                          <canvas id="analemma-canvas" width="600" height="400"></canvas>
