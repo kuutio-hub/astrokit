@@ -335,12 +335,24 @@ main {
     margin-bottom: 1rem;
 }
 
+.moon-phase-visual-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
 .moon-phase-visual canvas {
     cursor: pointer;
     transition: transform 0.2s ease;
 }
 .moon-phase-visual canvas:hover {
     transform: scale(1.05);
+}
+.moon-phase-visual-svg svg {
+    color: var(--text-secondary-color);
 }
 
 /* Calculators & Astrophoto */

@@ -10,7 +10,7 @@ import { initWiki } from './modules/wiki.js';
 import { initPolarAlign, stopPolarAlignAnimation } from './modules/polar_align.js';
 import { initPlanner } from './modules/planner.js';
 
-const APP_VERSION = 'v0.9.9.6';
+const APP_VERSION = 'v0.9.9.7';
 
 document.addEventListener('DOMContentLoaded', async () => {
     displayVersion();
@@ -35,7 +35,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         ];
 
         lazyLoadModules.forEach(module => {
-            document.querySelector(`.nav-item[data-target="${module.target}"]`).addEventListener('click', module.init, { once: true });
+            const navButton = document.querySelector(`.nav-item[data-target="${module.target}"]`);
+            if (navButton) {
+                navButton.addEventListener('click', module.init, { once: true });
+            }
             if (window.location.hash === `#${module.target}`) {
                 module.init();
             }

@@ -1,5 +1,6 @@
 
 import { moonTexture } from '../data/moon_texture.js';
+import { moonPhases } from '../data/moon_phases.js';
 
 let timeUpdateInterval = null;
 const moonImage = new Image();
@@ -97,6 +98,28 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
         }
     }
     
+    // --- Logic for the old SVG phase ---
+    const phaseIndex = Math.floor(moonIllumination.phase * moonPhases.length) % moonPhases.length;
+    const moonPath = moonPhases[phaseIndex];
+    const isWaning = moonIllumination.phase > 0.5;
+    const svgTransform = isWaning ? 'scale(-1, 1)' : '';
+
+    const oldMoonVisualHTML = `
+        <div class="moon-phase-visual-svg" title="Régi SVG nézet">
+            <svg viewBox="-18 -18 36 36" width="120" height="120">
+                <defs>
+                    <mask id="moon-mask">
+                        <circle cx="0" cy="0" r="16" fill="white" />
+                        <path d="${moonPath}" transform="${svgTransform}" fill="black" />
+                    </mask>
+                </defs>
+                <circle cx="0" cy="0" r="16" fill="currentColor" />
+                <circle cx="0" cy="0" r="16" fill="#f0f0f0" mask="url(#moon-mask)" />
+            </svg>
+        </div>
+    `;
+
+
     const dashboardHTML = `
         <div id="time-display" class="time-display">
             <div><i class="ph-clock"></i> Helyi idő: <span id="local-time">--:--:--</span></div>
@@ -125,8 +148,11 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
             </button>
             <div class="accordion-content active" style="max-height: fit-content; padding: 1.5rem;">
                  <div class="moon-phase-container">
-                    <div class="moon-phase-visual">
-                        <canvas id="moon-visual-canvas" width="120" height="120" title="Kattints a nagyításhoz!"></canvas>
+                    <div class="moon-phase-visual-container">
+                        <div class="moon-phase-visual" title="Fotorealisztikus nézet">
+                            <canvas id="moon-visual-canvas" width="120" height="120" title="Kattints a nagyításhoz!"></canvas>
+                        </div>
+                         ${oldMoonVisualHTML}
                     </div>
                     <strong>${moonPhaseName}</strong>
                     <p>${(moonIllumination.fraction * 100).toFixed(1)}% megvilágított</p>
