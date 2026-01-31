@@ -144,10 +144,14 @@ function filterAndRender() {
     const visibleOnly = $('planner-visible-only').checked;
 
     const filtered = allObjects.filter(obj => {
-        const nameMatch = obj.name.toLowerCase().includes(searchTerm) || obj.id.toLowerCase().includes(searchTerm);
+        const nameMatch = (obj.name && obj.name.toLowerCase().includes(searchTerm)) || obj.id.toLowerCase().includes(searchTerm);
         const typeMatch = typeFilter === 'all' || obj.type === typeFilter;
-        const constMatch = constFilter === 'all' || obj.const === constMatch;
-        const visibleMatch = !visibleOnly || obj.alt > 1; 
+        const constMatch = constFilter === 'all' || obj.const === constFilter;
+        
+        // If filtering for planets, ignore the "visibleOnly" toggle
+        const isPlanetFilter = typeFilter === 'Bolygó';
+        const visibleMatch = isPlanetFilter || !visibleOnly || obj.alt > 1; 
+
         return nameMatch && typeMatch && constMatch && visibleMatch;
     });
     
@@ -180,9 +184,11 @@ function renderTable(objects) {
                  visibilityText = 'Nagyon alacsonyan';
             }
 
+            const displayName = `${obj.id}${obj.name ? ` (${obj.name})` : ''}`;
+
             return `
                 <tr>
-                    <td>${obj.id} (${obj.name || 'N/A'})</td>
+                    <td>${displayName}</td>
                     <td>${obj.type}</td>
                     <td>${constellationNames[obj.const] || obj.const}</td>
                     <td>${alt}°</td>
@@ -199,9 +205,10 @@ function showObjectDetails(obj) {
 
     const raText = obj.ra ? `${obj.ra[0].toFixed(0)}h ${Math.abs(obj.ra[1]).toFixed(0)}m ${Math.abs(obj.ra[2]).toFixed(0)}s` : 'Változó';
     const decText = obj.dec ? `${obj.dec[0].toFixed(0)}° ${Math.abs(obj.dec[1]).toFixed(0)}' ${Math.abs(obj.dec[2]).toFixed(0)}"` : 'Változó';
+    const displayName = `${obj.id}${obj.name ? ` (${obj.name})` : ''}`;
 
     modalBody.innerHTML = `
-        <h3>${obj.name} (${obj.id})</h3>
+        <h3>${displayName}</h3>
         <p>${obj.description || 'Nincs elérhető leírás.'}</p>
         <ul class="data-list">
             <li><span class="label">Típus</span> <span class="value">${obj.type}</span></li>

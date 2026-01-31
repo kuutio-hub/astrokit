@@ -5,12 +5,12 @@ import { displayDashboardData, showError, hideLoader } from './modules/ui.js';
 import { initCalculators } from './modules/calculators.js';
 import { initAstrofotoHelper } from './modules/astrofoto.js';
 import { initAnalemma } from './modules/analemma.js';
-import { initCalendar } from './modules/calendar.js';
+import { initMoonCalendar } from './modules/moon_calendar.js';
 import { initWiki } from './modules/wiki.js';
 import { initPolarAlign, stopPolarAlignAnimation } from './modules/polar_align.js';
 import { initPlanner } from './modules/planner.js';
 
-const APP_VERSION = 'v0.9.9.5';
+const APP_VERSION = 'v0.9.9.6';
 
 document.addEventListener('DOMContentLoaded', async () => {
     displayVersion();
@@ -21,37 +21,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupModal();
     initCalculators();
     initAstrofotoHelper();
-    initCalendar();
     initWiki();
 
     try {
         const coords = await getUserLocation();
         await loadDashboardData(coords.latitude, coords.longitude);
         
-        const plannerNavItem = document.querySelector('.nav-item[data-target="planner"]');
-        if(plannerNavItem) {
-            plannerNavItem.addEventListener('click', () => {
-                initPlanner(coords.latitude, coords.longitude);
-            }, { once: true });
-        }
-        
-        document.querySelector('.nav-item[data-target="analemma"]').addEventListener('click', () => {
-           initAnalemma(coords.latitude, coords.longitude);
-        }, { once: true });
+        const lazyLoadModules = [
+            { target: 'planner', init: () => initPlanner(coords.latitude, coords.longitude) },
+            { target: 'analemma', init: () => initAnalemma(coords.latitude, coords.longitude) },
+            { target: 'polar-align', init: () => initPolarAlign(coords.latitude, coords.longitude) },
+            { target: 'moon-calendar', init: () => initMoonCalendar() }
+        ];
 
-        document.querySelector('.nav-item[data-target="polar-align"]').addEventListener('click', () => {
-           initPolarAlign(coords.latitude, coords.longitude);
+        lazyLoadModules.forEach(module => {
+            document.querySelector(`.nav-item[data-target="${module.target}"]`).addEventListener('click', module.init, { once: true });
+            if (window.location.hash === `#${module.target}`) {
+                module.init();
+            }
         });
-
-        if(window.location.hash === '#planner') {
-            initPlanner(coords.latitude, coords.longitude);
-        }
-        if(window.location.hash === '#analemma') {
-            initAnalemma(coords.latitude, coords.longitude);
-        }
-        if(window.location.hash === '#polar-align') {
-            initPolarAlign(coords.latitude, coords.longitude);
-        }
 
         hideLoader();
     } catch (error) {

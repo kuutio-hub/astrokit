@@ -39,42 +39,27 @@ function drawPolarScope(canvas, lst) {
     ctx.fillRect(0, 0, width, height);
     
     // Draw 12-hour outer circle with ticks
-    for (let i = 0; i < 72; i++) {
-        const angle = toRad(i * 5 - 90); // 0 is at the top (-90 deg)
-        const isHour = i % 6 === 0;
-        const isTenMin = i % 2 === 0;
-
-        let tickStart;
+    for (let i = 0; i < 12; i++) {
+        const angle = toRad(i * 30 - 90); // 0 is at the top (-90 deg)
+        const tickStart = radius * 0.90;
         ctx.strokeStyle = lineColor;
-        if (isHour) {
-            tickStart = radius * 0.90;
-            ctx.lineWidth = 2.5;
-        } else if (isTenMin) {
-            tickStart = radius * 0.94;
-            ctx.lineWidth = 1.5;
-        } else {
-            continue; // Don't draw 5-minute ticks
-        }
+        ctx.lineWidth = 2.5;
         
         ctx.beginPath();
         ctx.moveTo(center.x + Math.cos(angle) * tickStart, center.y + Math.sin(angle) * tickStart);
         ctx.lineTo(center.x + Math.cos(angle) * radius, center.y + Math.sin(angle) * radius);
         ctx.stroke();
 
-        let hour = (i / 6);
-        if (isHour && hour % 3 === 0) {
+        let hour = i;
+        if (hour % 3 === 0) {
             ctx.fillStyle = textColor;
             ctx.font = 'bold 16px sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             const textX = center.x + Math.cos(angle) * (radius - 25);
             const textY = center.y + Math.sin(angle) * (radius - 25);
-            ctx.save();
-            ctx.translate(textX, textY);
-            ctx.rotate(angle + Math.PI / 2);
-            let hourText = hour === 0 ? 12 : hour;
-            ctx.fillText(hourText, 0, 0);
-            ctx.restore();
+            let hourText = hour === 0 ? '0' : hour;
+            ctx.fillText(hourText, textX, textY);
         }
     }
 
@@ -89,7 +74,8 @@ function drawPolarScope(canvas, lst) {
     ctx.stroke();
 
     const hourAngle = (lst - polarisRA) * 15;
-    const angleRad = toRad(hourAngle) - Math.PI / 2;
+    // Stars rotate CCW around the pole. We subtract 90 to put 0 at the top.
+    const angleRad = -toRad(hourAngle) - Math.PI / 2;
     
     const polarisPos = {
         x: center.x + Math.cos(angleRad) * radius * polarisDistFraction,

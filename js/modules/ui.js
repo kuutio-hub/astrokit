@@ -1,10 +1,9 @@
 
-import { maria } from '../data/maria.js';
 import { moonTexture } from '../data/moon_texture.js';
 
 let timeUpdateInterval = null;
 const moonImage = new Image();
-let moonImageLoaded = false;
+export let moonImageLoaded = false;
 moonImage.onload = () => { moonImageLoaded = true; };
 moonImage.src = moonTexture;
 
@@ -162,7 +161,7 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
     
     const canvas = document.getElementById('moon-visual-canvas');
     if (canvas) {
-        const drawFn = () => updateMoonVisual(canvas, moonIllumination.fraction, moonIllumination.phase);
+        const drawFn = () => updateMoonVisual(canvas, SunCalc.getMoonIllumination(now));
         if (moonImageLoaded) {
             drawFn();
         } else {
@@ -174,7 +173,7 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
             const modalBody = document.getElementById('modal-body');
             modalBody.innerHTML = '<h3>Aktuális Holdfázis</h3><canvas id="modal-moon-canvas" width="400" height="400"></canvas>';
             const modalCanvas = document.getElementById('modal-moon-canvas');
-            const drawModalFn = () => updateMoonVisual(modalCanvas, moonIllumination.fraction, moonIllumination.phase);
+            const drawModalFn = () => updateMoonVisual(modalCanvas, SunCalc.getMoonIllumination(now));
              if (moonImageLoaded) {
                 drawModalFn();
             } else {
@@ -189,7 +188,8 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
 }
 
 
-function updateMoonVisual(canvas, fraction, phase) {
+export function updateMoonVisual(canvas, illumination) {
+    const { fraction, phase } = illumination;
     const ctx = canvas.getContext('2d');
     const { width, height } = canvas;
     const r = width / 2;
@@ -221,11 +221,11 @@ function updateMoonVisual(canvas, fraction, phase) {
     
     ctx.beginPath();
     if (phase <= 0.5) { // Waxing (light on the right)
-        ctx.arc(r, r, r, -Math.PI / 2, Math.PI / 2, false); // Right limb
-        ctx.ellipse(r, r, terminatorRx, r, 0, Math.PI / 2, -Math.PI / 2, terminatorX_signed > 0);
+        ctx.arc(r, r, r, -Math.PI / 2, Math.PI / 2, false);
+        ctx.ellipse(r, r, terminatorRx, r, 0, Math.PI / 2, -Math.PI / 2, true);
     } else { // Waning (light on the left)
-        ctx.arc(r, r, r, Math.PI / 2, -Math.PI / 2, false); // Left limb
-        ctx.ellipse(r, r, terminatorRx, r, 0, -Math.PI / 2, Math.PI / 2, terminatorX_signed > 0);
+        ctx.arc(r, r, r, Math.PI / 2, -Math.PI / 2, false);
+        ctx.ellipse(r, r, terminatorRx, r, 0, -Math.PI / 2, Math.PI / 2, true);
     }
     ctx.closePath();
 

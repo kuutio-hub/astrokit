@@ -1,0 +1,80 @@
+
+/* Default styles for screen are in style.css */
+
+@media print {
+    body.printable {
+        --bg-color: #ffffff;
+        --primary-color: #f8f9fa;
+        --secondary-color: #e9ecef;
+        --border-color: #dee2e6;
+        --text-color: #212529;
+        --text-secondary-color: #6c757d;
+        --accent-color: #007bff;
+    }
+
+    .printable header,
+    .printable footer,
+    .printable .controls,
+    .printable #mobile-menu,
+    .printable .nav-item,
+    .printable .card > h2,
+    .printable .moon-calendar-controls {
+        display: none !important;
+    }
+    
+    .printable .app-container {
+        max-width: 100%;
+        padding: 0;
+    }
+    
+    .printable main {
+        min-height: auto;
+    }
+    
+    .printable .content-section {
+        display: none !important;
+    }
+
+    .printable #moon-calendar.active {
+        display: block !important;
+    }
+
+    .printable .card {
+        border: none;
+        box-shadow: none;
+        padding: 0;
+    }
+    
+    .printable #mc-month-year-print {
+        display: block;
+        text-align: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        color: var(--text-color);
+    }
+    
+    .printable .moon-calendar-grid {
+        gap: 0;
+    }
+    
+    .printable .mc-day {
+        border: 1px solid var(--border-color);
+        background-color: var(--bg-color);
+        padding: 4px;
+        min-height: 120px;
+    }
+    
+    .printable .mc-day-header {
+        color: var(--text-color);
+    }
+
+    @page {
+        size: A4 portrait;
+        margin: 2cm;
+    }
+}
+
+/* Hide print-only elements on screen */
+#mc-month-year-print {
+    display: none;
+}
