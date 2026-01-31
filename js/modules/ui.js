@@ -1,18 +1,26 @@
 
-import { moonTexture } from '../data/moon_texture.js';
+import { moonTextureUrl } from '../data/moon_texture.js';
 import { moonPhases } from '../data/moon_phases.js';
 
 let timeUpdateInterval = null;
 
 const moonImage = new Image();
+moonImage.crossOrigin = "Anonymous"; // Allow cross-origin loading for canvas
 export let moonImageLoaded = false;
 const onImageLoadCallbacks = [];
+
 moonImage.onload = () => {
   moonImageLoaded = true;
   onImageLoadCallbacks.forEach(cb => cb());
   onImageLoadCallbacks.length = 0; 
 };
-moonImage.src = moonTexture;
+
+moonImage.onerror = () => {
+    console.error("Hiba a Hold textúra betöltésekor egy külső URL-ről.");
+    // Itt lehetne egy tartalék, egyszerűbb Holdat rajzolni, de egyelőre a hibaüzenet elég.
+};
+
+moonImage.src = moonTextureUrl;
 
 export function executeWhenImageLoaded(callback) {
   if (moonImageLoaded || moonImage.complete) {
