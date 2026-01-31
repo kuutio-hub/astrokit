@@ -358,6 +358,14 @@ main {
     transform: scale(1.05);
 }
 
+.moon-phase-visual-svg {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.moon-phase-visual-svg:hover {
+    transform: scale(1.05);
+}
+
 .moon-phase-visual-svg .moon-svg-glow {
     fill: var(--moon-svg-glow-color);
     transform: scale(1.05);

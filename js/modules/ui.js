@@ -1,11 +1,12 @@
 
 import { moonTextureUrl } from '../data/moon_texture.js';
 import { moonPhases } from '../data/moon_phases.js';
+import { maria } from '../data/maria.js';
 
 let timeUpdateInterval = null;
 
 const moonImage = new Image();
-moonImage.crossOrigin = "Anonymous"; // Allow cross-origin loading for canvas
+// Nincs szükség a crossOrigin attribútumra, ha helyi fájlt használunk
 export let moonImageLoaded = false;
 const onImageLoadCallbacks = [];
 
@@ -16,8 +17,8 @@ moonImage.onload = () => {
 };
 
 moonImage.onerror = () => {
-    console.error("Hiba a Hold textúra betöltésekor egy külső URL-ről.");
-    // Itt lehetne egy tartalék, egyszerűbb Holdat rajzolni, de egyelőre a hibaüzenet elég.
+    console.error("Hiba a Hold textúra betöltésekor a helyi 'pictures/moon.jpg' fájlból.");
+    showError("A Hold textúráját nem sikerült betölteni. Az ábrák nem fognak megjelenni.");
 };
 
 moonImage.src = moonTextureUrl;
@@ -135,7 +136,7 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
     const moonPath = moonPhases[phaseIndex];
 
     const oldMoonVisualHTML = `
-        <div class="moon-phase-visual-svg" title="Régi SVG nézet">
+        <div class="moon-phase-visual-svg" title="Stilizált nézet (kattints a nagyításhoz!)">
             <svg viewBox="-18 -18 36 36" width="120" height="120">
                 <defs>
                     <mask id="moon-mask">
@@ -180,8 +181,8 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
             <div class="accordion-content active" style="max-height: fit-content; padding: 1.5rem;">
                  <div class="moon-phase-container">
                     <div class="moon-phase-visual-container">
-                        <div class="moon-phase-visual" title="Fotorealisztikus nézet">
-                            <canvas id="moon-visual-canvas" width="120" height="120" title="Kattints a nagyításhoz!"></canvas>
+                        <div class="moon-phase-visual" title="Fotorealisztikus nézet (kattints a nagyításhoz!)">
+                            <canvas id="moon-visual-canvas" width="120" height="120"></canvas>
                         </div>
                          ${oldMoonVisualHTML}
                     </div>
@@ -217,19 +218,26 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
     timeUpdateInterval = setInterval(updateTimeDisplay, 1000);
     
     const canvas = document.getElementById('moon-visual-canvas');
+    const svgVisual = container.querySelector('.moon-phase-visual-svg');
+
+    const openMoonModal = () => {
+        const modal = document.getElementById('app-modal');
+        const modalBody = document.getElementById('modal-body');
+        modalBody.innerHTML = '<h3>Aktuális Holdfázis</h3><canvas id="modal-moon-canvas" width="400" height="400"></canvas>';
+        const modalCanvas = document.getElementById('modal-moon-canvas');
+        const drawModalFn = () => updateMoonVisual(modalCanvas, SunCalc.getMoonIllumination(now));
+        executeWhenImageLoaded(drawModalFn);
+        modal.style.display = 'flex';
+    };
+
     if (canvas) {
         const drawFn = () => updateMoonVisual(canvas, SunCalc.getMoonIllumination(now));
         executeWhenImageLoaded(drawFn);
-        
-        canvas.addEventListener('click', () => {
-            const modal = document.getElementById('app-modal');
-            const modalBody = document.getElementById('modal-body');
-            modalBody.innerHTML = '<h3>Aktuális Holdfázis</h3><canvas id="modal-moon-canvas" width="400" height="400"></canvas>';
-            const modalCanvas = document.getElementById('modal-moon-canvas');
-            const drawModalFn = () => updateMoonVisual(modalCanvas, SunCalc.getMoonIllumination(now));
-            executeWhenImageLoaded(drawModalFn);
-            modal.style.display = 'flex';
-        });
+        canvas.addEventListener('click', openMoonModal);
+    }
+    
+    if (svgVisual) {
+        svgVisual.addEventListener('click', openMoonModal);
     }
     
     updateMoonPosition(lat, lon);
@@ -238,13 +246,12 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
 
 
 export function updateMoonVisual(canvas, illumination) {
-    const { fraction, phase } = illumination;
+    const { phase } = illumination;
     const ctx = canvas.getContext('2d');
     const { width, height } = canvas;
     const r = width / 2;
     ctx.clearRect(0, 0, width, height);
 
-    // --- 1. Draw Glow ---
     ctx.save();
     ctx.shadowColor = 'rgba(200, 200, 255, 0.5)';
     ctx.shadowBlur = r * 0.2;
@@ -254,33 +261,52 @@ export function updateMoonVisual(canvas, illumination) {
     ctx.fill();
     ctx.restore();
 
-    // --- 2. Draw Earthshine Base (dim texture) ---
     ctx.save();
-    ctx.globalAlpha = 0.25; // Earthshine brightness
+    ctx.globalAlpha = 0.25;
     ctx.beginPath();
     ctx.arc(r, r, r, 0, 2 * Math.PI);
     ctx.clip();
     ctx.drawImage(moonImage, 0, 0, width, height);
     ctx.restore();
 
-    // --- 3. Create clipping path for the lit area ---
     const terminatorX_signed = r * Math.cos(phase * 2 * Math.PI);
     const terminatorRx = Math.abs(terminatorX_signed);
     
     ctx.beginPath();
-    if (phase <= 0.5) { // Waxing (light on the right)
+    if (phase <= 0.5) {
         ctx.arc(r, r, r, -Math.PI / 2, Math.PI / 2, false);
         ctx.ellipse(r, r, terminatorRx, r, 0, Math.PI / 2, -Math.PI / 2, true);
-    } else { // Waning (light on the left)
+    } else {
         ctx.arc(r, r, r, Math.PI / 2, -Math.PI / 2, false);
         ctx.ellipse(r, r, terminatorRx, r, 0, -Math.PI / 2, Math.PI / 2, true);
     }
     ctx.closePath();
 
-    // --- 4. Draw the lit texture inside the clip ---
     ctx.save();
     ctx.clip();
     ctx.drawImage(moonImage, 0, 0, width, height);
+    ctx.restore();
+    
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(r, r, r, 0, 2 * Math.PI);
+    ctx.clip();
+
+    maria.forEach(mare => {
+        ctx.beginPath();
+        mare.path.forEach((point, index) => {
+            const x = r * (1 + point[0]);
+            const y = r * (1 - point[1]);
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+        ctx.closePath();
+        ctx.fillStyle = `rgba(0, 0, 0, ${mare.opacity * 0.4})`;
+        ctx.fill();
+    });
     ctx.restore();
 }
 
