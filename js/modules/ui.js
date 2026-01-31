@@ -3,10 +3,24 @@ import { moonTexture } from '../data/moon_texture.js';
 import { moonPhases } from '../data/moon_phases.js';
 
 let timeUpdateInterval = null;
+
 const moonImage = new Image();
 export let moonImageLoaded = false;
-moonImage.onload = () => { moonImageLoaded = true; };
+const onImageLoadCallbacks = [];
+moonImage.onload = () => {
+  moonImageLoaded = true;
+  onImageLoadCallbacks.forEach(cb => cb());
+  onImageLoadCallbacks.length = 0; 
+};
 moonImage.src = moonTexture;
+
+export function executeWhenImageLoaded(callback) {
+  if (moonImageLoaded || moonImage.complete) {
+    callback();
+  } else {
+    onImageLoadCallbacks.push(callback);
+  }
+}
 
 function formatTime(date) {
     if (!date || isNaN(date)) return 'N/A';
@@ -98,11 +112,19 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
         }
     }
     
-    // --- Logic for the old SVG phase ---
-    const phaseIndex = Math.floor(moonIllumination.phase * moonPhases.length) % moonPhases.length;
+    // --- Új, robusztus logika az SVG fázishoz ---
+    let phaseIndex;
+    const phase = moonIllumination.phase;
+    const steps = moonPhases.length - 1; 
+    let svgTransform = '';
+
+    if (phase <= 0.5) { // Növekvő fázis
+        phaseIndex = Math.round(steps - (phase * 2 * steps));
+        svgTransform = 'scale(-1, 1)';
+    } else { // Fogyó fázis
+        phaseIndex = Math.round((phase - 0.5) * 2 * steps);
+    }
     const moonPath = moonPhases[phaseIndex];
-    const isWaning = moonIllumination.phase > 0.5;
-    const svgTransform = isWaning ? 'scale(-1, 1)' : '';
 
     const oldMoonVisualHTML = `
         <div class="moon-phase-visual-svg" title="Régi SVG nézet">
@@ -189,11 +211,7 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
     const canvas = document.getElementById('moon-visual-canvas');
     if (canvas) {
         const drawFn = () => updateMoonVisual(canvas, SunCalc.getMoonIllumination(now));
-        if (moonImageLoaded) {
-            drawFn();
-        } else {
-            moonImage.onload = drawFn;
-        }
+        executeWhenImageLoaded(drawFn);
         
         canvas.addEventListener('click', () => {
             const modal = document.getElementById('app-modal');
@@ -201,11 +219,7 @@ export function displayDashboardData(sunData, moonData, nextPhases, lat, lon) {
             modalBody.innerHTML = '<h3>Aktuális Holdfázis</h3><canvas id="modal-moon-canvas" width="400" height="400"></canvas>';
             const modalCanvas = document.getElementById('modal-moon-canvas');
             const drawModalFn = () => updateMoonVisual(modalCanvas, SunCalc.getMoonIllumination(now));
-             if (moonImageLoaded) {
-                drawModalFn();
-            } else {
-                moonImage.onload = drawModalFn;
-            }
+            executeWhenImageLoaded(drawModalFn);
             modal.style.display = 'flex';
         });
     }
@@ -221,7 +235,6 @@ export function updateMoonVisual(canvas, illumination) {
     const { width, height } = canvas;
     const r = width / 2;
     ctx.clearRect(0, 0, width, height);
-    if (!moonImageLoaded) return;
 
     // --- 1. Draw Glow ---
     ctx.save();

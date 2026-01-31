@@ -1,5 +1,5 @@
 
-import { updateMoonVisual, moonImageLoaded } from './ui.js';
+import { updateMoonVisual, executeWhenImageLoaded } from './ui.js';
 import { events } from '../data/events.js';
 
 let currentDate = new Date();
@@ -178,7 +178,7 @@ function renderCalendar() {
         grid.insertAdjacentHTML('beforeend', dayHTML);
     }
     
-    setTimeout(drawAllMoonPhases, 0);
+    executeWhenImageLoaded(drawAllMoonPhases);
 }
 
 function drawAllMoonPhases() {
@@ -188,27 +188,14 @@ function drawAllMoonPhases() {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
 
-    const drawFn = () => {
-        canvases.forEach(canvas => {
-            const day = parseInt(canvas.dataset.day, 10);
-            if (!isNaN(day)) {
-                const date = new Date(year, month, day, 12, 0, 0);
-                const illumination = SunCalc.getMoonIllumination(date);
-                updateMoonVisual(canvas, illumination);
-            }
-        });
-    };
-    
-    if (moonImageLoaded) {
-        drawFn();
-    } else {
-        const interval = setInterval(() => {
-            if (moonImageLoaded) {
-                clearInterval(interval);
-                drawFn();
-            }
-        }, 100);
-    }
+    canvases.forEach(canvas => {
+        const day = parseInt(canvas.dataset.day, 10);
+        if (!isNaN(day)) {
+            const date = new Date(year, month, day, 12, 0, 0);
+            const illumination = SunCalc.getMoonIllumination(date);
+            updateMoonVisual(canvas, illumination);
+        }
+    });
 }
 
 function openNotesModal(dateString) {
